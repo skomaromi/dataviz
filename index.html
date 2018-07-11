@@ -11,12 +11,14 @@
                 font-family: Arial, Helvetica, sans-serif;
                 font-size: 62.5%;
                 letter-spacing: -0.03em;
-                flex-direction: column;
                 max-height: 100vh;
             }
-            body, footer,
-            nav ul,
-            .cols, .rows {
+            body, 
+            .cols, .rows,
+            nav ul, nav ul li a,
+            footer, footer .controls, footer .controls ul, 
+            footer .controls ul li, footer .controls ul li a,
+            #progress-bar {
                 display: flex;
             }
             .cols {
@@ -26,19 +28,19 @@
                 flex-direction: column;
             }
 
-            .grow,
+            #map, #progress-bar,
             .cols, .rows {
                 flex-grow: 1;
             }
             
-            nav ul {
+            nav ul,
+            footer .controls ul {
                 list-style-type: none;
             }
             nav ul li {
                 flex: 1;
             }
             nav ul li a {
-                display: inline-flex;
                 align-items: center;
                 width: 100%;
                 height: 60px;
@@ -73,7 +75,7 @@
             aside {
                 color: #838383;
             }
-            .map {
+            #map {
                 box-shadow: inset -7px 5px 35px -15px #838383,
                             inset 0px -10px 20px -15px #0078a1;
             }
@@ -88,23 +90,56 @@
             aside h2 {
                 margin-bottom: .6em;
             }
-            .attr {
+            aside .attr {
                 margin-bottom: .4em;
                 margin-left: 1em;
             }
-            .attr-title {
+            aside .attr-title {
                 font-weight: bold;
             }
             aside h3 {
                 margin-top: 4em;
                 margin-left: .5em;
             }
+            aside .graph {
+                margin-top: 1em;
+                margin-left: 1em;
+            }
 
             footer {
                 /* placeholder until controls and gradient */
                 background-color: #0078a1;
+                flex: 0 0 45px;
+            }
+            footer, footer .controls ul li a {
                 color: #fff;
-                flex-shrink: 0;
+            }
+            footer .controls ul li a {
+                font-size: 1.7em;
+                padding: 0 17px;
+                align-items: center;
+                text-decoration: none;
+            }
+            footer .controls ul li a:hover {
+                background-color: #005c7a;
+            }
+            footer .controls ul li a:active {
+                background-color: #004a63;
+            }
+
+            #progress-bar {
+                padding: 10px;
+                position: relative;
+            }
+            #progress-bar svg {
+                flex-grow: 1;
+            }
+            #progress-bar #current-year {
+                position: absolute;
+                right: 10px;
+                bottom: 10px;
+                font-weight: 1000;
+                font-size: 1.6em;
             }
         </style>
     </head>
@@ -141,7 +176,7 @@
                             </li>
                         </ul>
                     </nav>
-                    <svg class="map grow"></svg>
+                    <svg id="map"></svg>
                 </div>
                 <aside>
                     <h2>Osje&ccaron;ko-baranjska &zcaron;upanija</h2>
@@ -165,8 +200,19 @@
                 </aside>
             </div>
             <footer>
-                <span style="display: inline-block; width: 5px; height: 45px;"></span>
-                <span>fancy controls go here.</span>
+                <div class="controls">
+                    <ul>
+                        <li><a href="#"><i class="fas fa-fast-backward"></i></a></li>
+                        <li><a href="#"><i class="fas fa-play"></i></a></li>
+                        <li><a href="#"><i class="fas fa-fast-forward"></i></a></li>
+                    </ul>
+                </div>
+                <div id="progress-bar">
+                    <svg></svg>
+                    <span id="current-year">
+                        2008
+                    </span>
+                </div>
             </footer>
         </div>
     </body>
