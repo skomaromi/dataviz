@@ -1,16 +1,19 @@
 <html>
     <head>
         <title>Data Visualization - Phase 1 - Layout</title>
+        <script src="http://d3js.org/d3.v3.min.js"></script>
         <style>
             @import url(https://use.fontawesome.com/releases/v5.1.0/css/all.css);
             * {
                 margin: 0;
                 padding: 0;
             }
-            body {
+            body, text {
                 font-family: Arial, Helvetica, sans-serif;
+            }
+            body {
                 font-size: 62.5%;
-                letter-spacing: -0.03em;
+                letter-spacing: -0.04em;
                 height: 100vh;
             }
             body, 
@@ -18,7 +21,7 @@
             nav ul, nav ul li a,
             footer, footer .controls, footer .controls ul, 
             footer .controls ul li, footer .controls ul li a,
-            #progress-bar {
+            #progress-bar, #current-year {
                 display: flex;
             }
             .cols {
@@ -138,21 +141,264 @@
             }
 
             #progress-bar {
-                padding: 10px;
-                position: relative;
+                padding: 5px 10px;
             }
             #progress-bar svg {
                 flex-grow: 1;
-                height: 25px;
+                height: 35px;
             }
-            #progress-bar #current-year {
-                position: absolute;
-                right: 10px;
-                bottom: 10px;
+            #progress-bar .tick text {
+                fill: #fff;
+            }
+            #progress-bar .tick line,
+            #progress-bar .domain {
+                display: none;
+            }
+            #progress-bar #elapsed {
+                fill: #006080;
+            }
+            #progress-bar #handle {
+                fill: #0078a1;
+                stroke: #fff;
+                stroke-width: 1.5px;
+            }
+            #progress-bar #handle:hover,
+            #progress-bar #handle:active {
+                stroke-width: 2px;
+            }
+            #progress-bar #handle:active {
+                fill: #fff;
+            }
+            #current-year {
+                margin: 0 15px;
+                align-items: center;
                 font-weight: bolder;
-                font-size: 1.6em;
+                font-size: 2.4em;
+                letter-spacing: -0.06em;
             }
         </style>
+        <script>
+            window.onload = function() {
+                /******************
+                *    constants    *
+                ******************/
+                var progressBarPaddingX = 32,
+                    progressBarLineHeight = 3,
+                    progressHandleSize = 10,
+                    yStart = 8;
+
+                /***************
+                *    main()    *
+                ***************/
+                // placeholder data, replace with actual start and end years 
+                // fetched from the JSON file
+                var yearStart = 2004,
+                    yearEnd = 2018;
+                
+                var animRunning = false,
+                    animInterruptedByDrag = false;
+
+                var progressBarContainer = d3.select("#progress-bar svg");
+                var map = d3.select("#map");
+                var progressHandleDragBehavior = d3.behavior
+                    .drag()
+                    .on("dragstart", progressHandleDragStart)
+                    .on("drag", progressHandleDrag)
+                    .on("dragend", progressHandleDragEnd);
+
+                var mapClientRect = map.node().getBoundingClientRect();
+                
+                var progressBarContainerClientRect = progressBarContainer
+                    .node()
+                    .getBoundingClientRect();
+                
+                var progressBarAreaXStart = 
+                        0,
+                    progressBarAreaXEnd = 
+                        mapClientRect.x 
+                            + mapClientRect.width 
+                            - progressBarContainerClientRect.x;
+                
+                var progressBarLineWidth = 
+                    progressBarAreaXEnd - progressBarAreaXStart;
+                
+                var usableProgressBarAreaXStart = 
+                        progressBarAreaXStart + progressBarPaddingX,
+                    usableProgressBarAreaXEnd = 
+                        progressBarAreaXEnd - progressBarPaddingX;
+
+                var usableProgressBarAreaWidth = 
+                    usableProgressBarAreaXEnd - usableProgressBarAreaXStart;
+                
+                var DEBUG_VAR_DUMP = {
+                    progressBarAreaXStart: progressBarAreaXStart,
+                    progressBarAreaXEnd: progressBarAreaXEnd,
+                    usableProgressBarAreaXStart: usableProgressBarAreaXStart,
+                    usableProgressBarAreaXEnd: usableProgressBarAreaXEnd
+                };
+                console.log(DEBUG_VAR_DUMP);
+
+                var progressBarLine = progressBarContainer
+                    .append("rect")
+                    .attr({
+                        y: yStart,
+                        width: progressBarLineWidth,
+                        height: progressBarLineHeight,
+                        fill: "white"
+                    });
+             
+                var progressBarAxisScale = d3.scale.linear()
+                    .domain([yearStart, yearEnd])
+                    .range([
+                        usableProgressBarAreaXStart, 
+                        usableProgressBarAreaXEnd
+                    ]);
+                
+                var progressBarAxisSvg = d3.svg
+                    .axis()
+                    .tickFormat(d3.format("d"))
+                    .scale(progressBarAxisScale);
+
+                var progressBarAxisGroup = progressBarContainer
+                    .append("g")
+                    .attr({transform: "translate(0, "+yStart+")"})
+                    .call(progressBarAxisSvg);
+                
+                progressBarAxisGroup
+                    .selectAll(".tick text")
+                    .attr({dy: "1em"});
+                
+                // initial progressBar draw
+                var currentX = usableProgressBarAreaXStart;
+                var progressBarLineElapsedXEnd = currentX;
+                var progressBarLineElapsedWidth = 
+                    progressBarLineElapsedXEnd - progressBarAreaXStart;
+                var progressBarLineElapsed = progressBarContainer
+                    .append("rect")
+                    .attr({
+                        id: "elapsed",
+                        y: yStart,
+                        width: progressBarLineElapsedWidth,
+                        height: progressBarLineHeight,
+                        fill: "purple"
+                    });
+                
+                var progressHandle = makeProgressHandle();
+                
+                
+                /********************************************
+                *    register window event handlers here    *
+                ********************************************/
+                window.onresize = windowResizeHandler;
+                
+                /******************
+                *    functions    *
+                ******************/
+                function windowResizeHandler() {
+                    console.log("windowResizeHandler() called!");
+                    
+                    mapClientRect = map.node().getBoundingClientRect();
+                    progressBarContainerClientRect = progressBarContainer
+                        .node()
+                        .getBoundingClientRect();
+                    
+                    progressBarAreaXEnd = 
+                        mapClientRect.x 
+                            + mapClientRect.width 
+                            - progressBarContainerClientRect.x;
+
+                    //
+                    // resize progress bar line
+                    //
+                    progressBarLineWidth = 
+                        progressBarAreaXEnd - progressBarAreaXStart;
+                    
+                    progressBarWidth = progressBarContainer
+                        .node()
+                        .getBoundingClientRect()
+                        .width;
+
+                    progressBarLine.attr({
+                        width: progressBarLineWidth
+                    });
+
+                    //
+                    // resize axes
+                    //
+                    usableProgressBarAreaXStart = 
+                        progressBarAreaXStart + progressBarPaddingX;
+                    usableProgressBarAreaXEnd = 
+                        progressBarAreaXEnd - progressBarPaddingX;
+
+                    progressBarAxisScale.range([
+                        usableProgressBarAreaXStart, 
+                        usableProgressBarAreaXEnd
+                    ]);
+                    progressBarAxisSvg.scale(progressBarAxisScale);
+                    progressBarAxisGroup.remove();
+                    progressBarAxisGroup = progressBarContainer
+                        .append("g")
+                        .attr({transform: "translate(0, "+yStart+")"})
+                        .call(progressBarAxisSvg);
+
+                    // reapply custom axis labels positioning
+                    progressBarAxisGroup
+                        .selectAll(".tick text")
+                        .attr({dy: "1em"});
+                    
+                    //
+                    // relocate progress button
+                    //
+                    progressHandle.remove();
+                    progressHandle = makeProgressHandle();
+                }
+                
+                function makeProgressHandle() {
+                    return progressBarContainer
+                        .append("rect")
+                        .attr({
+                            id: "handle",
+                            x: currentX - progressHandleSize / 2,
+                            y: yStart + progressBarLineHeight / 2 - progressHandleSize / 2,
+                            ry: 2.5,
+                            width: progressHandleSize,
+                            height: progressHandleSize,
+                            fill: "red"
+                        })
+                        .call(progressHandleDragBehavior);
+                }
+                
+                function progressHandleDragStart() {
+                    console.log("progressHandleDragStart() called!");
+                    if (animRunning) {
+                        stopAnim();
+                        animInterruptedByDrag = true;
+                    }
+                }
+
+                function progressHandleDrag() {
+                    console.log("progressHandleDrag() called!");
+                }
+
+                function progressHandleDragEnd() {
+                    console.log("progressHandleDragEnd() called!");
+
+                    if (animInterruptedByDrag) {
+                        startAnim();
+                    }
+                }
+
+                function stopAnim() {
+                    console.log("stopAnim() called!");
+                    animRunning = false;
+                }
+
+                function startAnim() {
+                    console.log("startAnim() called!");
+                    animRunning = true;
+                }
+            };
+        </script>
     </head>
     
     <body>
@@ -220,9 +466,9 @@
                 </div>
                 <div id="progress-bar">
                     <svg></svg>
-                    <span id="current-year">
-                        2008
-                    </span>
+                </div>
+                <div id="current-year">
+                    2008
                 </div>
             </footer>
         </div>
