@@ -156,6 +156,9 @@ footer #controls ul li a:active {
 #progress-bar .domain {
     display: none;
 }
+#progress-bar #lines {
+    cursor: pointer;
+}
 #progress-bar #elapsed {
     fill: rgba(0, 0, 0, 0.3);
 }

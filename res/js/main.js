@@ -3,7 +3,7 @@ window.onload = function() {
     *    constants    *
     ******************/
     var progressBarPaddingX = 32,
-        progressBarLineHeight = 3,
+        progressBarLineHeight = 5,
         progressBarAxisGroupTicksYOffset = 4,
         progressHandleRNormal = 5,
         progressHandleRLarge = 7,
@@ -17,7 +17,7 @@ window.onload = function() {
     *    main()    *
     ***************/
     // placeholder data, replace with actual start and end years 
-    // fetched from the JSON file
+    // fetched from the JSON file(s)
     var yearStart = 2004,
         yearEnd = 2018;
     
@@ -64,6 +64,17 @@ window.onload = function() {
     var progressBarAreaXEnd = 
         mapClientRect.width - progressBarContainerClientRect.x;
     
+    var progressBarLineDragBehavior = d3.behavior
+        .drag()
+        .on("dragstart", progressBarLineDragStart)
+        .on("drag", progressBarLineDrag)
+        .on("dragend", progressBarLineDragEnd);
+    
+    var progressBarLineGroup = progressBarContainer
+        .append("g")
+        .attr({id: "lines"})
+        .call(progressBarLineDragBehavior);
+
     var usableProgressBarAreaXStart = 
         progressBarAreaXStart + progressBarPaddingX;
     var usableProgressBarAreaXEnd = 
@@ -83,17 +94,14 @@ window.onload = function() {
 
     var progressBarAxisGroup = makeProgressBarTicks();
     
-    //
     // initial progressBar draw
-    //
-
     var currentX = usableProgressBarAreaXStart;
 
     var progressBarLineElapsedXStart, progressBarLineElapsedXEnd, 
         progressBarLineElapsedWidth;
     updateProgressBarLineElapsedDimensions();
 
-    var progressBarLineElapsed = progressBarContainer
+    var progressBarLineElapsed = progressBarLineGroup
         .append("rect")
         .attr({
             id: "elapsed",
@@ -106,7 +114,7 @@ window.onload = function() {
         progressBarLineRemainingWidth;
     updateProgressBarLineRemainingDimensions();
 
-    var progressBarLineRemaining = progressBarContainer
+    var progressBarLineRemaining = progressBarLineGroup
         .append("rect")
         .attr({
             id: "remaining",
@@ -196,6 +204,21 @@ window.onload = function() {
             .call(progressHandleDragBehavior);
     }
     
+    function progressBarLineDragStart() {
+        progressHandleDragStart();
+
+        var mouseEventX = d3.event.sourceEvent.offsetX;
+        handleDragEvent(mouseEventX);
+    }
+
+    function progressBarLineDrag() {
+        progressHandleDrag();
+    }
+
+    function progressBarLineDragEnd() {
+        progressHandleDragEnd();
+    }
+
     function progressHandleDragStart() {
         expandProgressHandle();
 
@@ -205,9 +228,13 @@ window.onload = function() {
         }
     }
 
-    function progressHandleDrag(d) {
-        var event = d3.event;
-        var decodedYearFloat = progressBarAxisScale.invert(event.x);
+    function progressHandleDrag() {
+        var mouseEventX = d3.event.x;
+        handleDragEvent(mouseEventX);
+    }
+
+    function handleDragEvent(x) {
+        var decodedYearFloat = progressBarAxisScale.invert(x);
         var decodedYear = Math.round(decodedYearFloat);
 
         if (decodedYear > yearEnd)
@@ -323,6 +350,10 @@ window.onload = function() {
 
         hidePlayButton();
         showPauseButton();
+
+        // don't start over if animation reached end by dragging
+        if (currentYear == yearEnd && !animInterruptedByDrag)
+            updateCurrentYear(yearStart);
 
         animRunning = true;
 
