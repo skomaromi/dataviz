@@ -1,0 +1,176 @@
+@import url(https://use.fontawesome.com/releases/v5.1.0/css/all.css);
+
+* {
+    margin: 0;
+    padding: 0;
+}
+body, text {
+    font-family: Arial, Helvetica, sans-serif;
+}
+body {
+    font-size: 62.5%;
+    letter-spacing: -0.04em;
+    height: 100vh;
+    user-select: none;
+}
+body, 
+.cols, .rows,
+nav ul, nav ul li a,
+footer, footer #controls, footer #controls ul, 
+footer #controls ul li, footer #controls ul li a,
+#progress-bar, #current-year {
+    display: flex;
+}
+.cols {
+    flex-direction: row;
+    min-height: 0;
+}
+.rows {
+    flex-direction: column;
+}
+
+#map, #progress-bar,
+.cols, .rows {
+    flex-grow: 1;
+}
+
+nav ul,
+footer #controls ul {
+    list-style-type: none;
+}
+nav ul li {
+    flex: 1;
+}
+nav ul li a {
+    align-items: center;
+    width: 100%;
+    height: 60px;
+    padding: 10px 10px 6px 10px;
+    text-decoration: none;
+    border-bottom: 4px solid #fff;
+    box-sizing: border-box;
+}
+nav ul li a:not(.active):hover {
+    background-color: #f9f9f9;
+    border-bottom-color: #eaeaea;
+}
+nav ul li a:not(.active):active {
+    background-color: #dedede;
+    border-bottom-color: #c7c7c7;
+}
+nav ul li a.active {
+    color: #0078a1;
+    border-bottom-color: #0078a1;
+    font-weight: bold;
+}
+nav ul li a .icon {
+    font-size: 3.2em;
+    margin-right: 8px;
+}
+nav ul li a .title {
+    font-size: 1.2em;
+    word-spacing: 100vw;
+    line-height: 1em;
+}
+nav ul li a, 
+aside {
+    color: #838383;
+}
+#map {
+    box-shadow: inset -7px 5px 35px -15px #838383,
+                inset 0px -10px 20px -15px #0078a1;
+}
+@-moz-document url-prefix() {
+    #map {
+        box-shadow: inset -4px 2px 21px -12px #838383, 
+                    inset 0px -8px 11px -13px #0078a1;
+    }
+}
+
+aside {
+    width: 270px;
+    flex-shrink: 0;
+    box-sizing: border-box;
+    padding: 20px 15px 0px 15px;
+    overflow-y: auto;
+}
+aside h2 {
+    margin-bottom: .6em;
+}
+aside .attr {
+    margin-bottom: .4em;
+    margin-left: 1em;
+}
+aside .attr-title {
+    font-weight: bold;
+}
+aside .attr-value {
+    user-select: all;
+}
+aside h3 {
+    margin-top: 4em;
+    margin-left: .5em;
+}
+aside .graph {
+    margin-top: 1em;
+    margin-left: 1em;
+}
+aside .graph:last-child {
+    margin-bottom: 2.5em;
+}
+
+footer {
+    /* single color fallback */
+    background-color: #0078a1;
+    background-image: linear-gradient(170deg, #0078a1 10%, #9600a1);
+    background-size: 100% 400%;
+    flex: 0 0 45px;
+}
+footer, footer #controls ul li a {
+    color: #fff;
+}
+footer #controls ul li a {
+    font-size: 1.7em;
+    padding: 0 17px;
+    align-items: center;
+    text-decoration: none;
+}
+footer #controls ul li a:hover {
+    background-color: rgba(0, 0, 0, 0.2);
+}
+footer #controls ul li a:active {
+    background-color: rgba(0, 0, 0, 0.4);
+}
+
+#progress-bar {
+    padding: 5px 10px;
+}
+#progress-bar svg {
+    flex-grow: 1;
+    height: 35px;
+}
+#progress-bar .tick text {
+    fill: #fff;
+}
+#progress-bar .tick line,
+#progress-bar .domain {
+    display: none;
+}
+#progress-bar #elapsed {
+    fill: rgba(0, 0, 0, 0.3);
+}
+#progress-bar #remaining {
+    fill: rgba(255, 255, 255, 0.2);
+}
+#progress-bar #handle {
+    fill: #fff;
+    stroke-width: 1.5px;
+    cursor: pointer;
+}
+#current-year {
+    margin: 0 15px;
+    align-items: center;
+    font-weight: bolder;
+    font-size: 2.4em;
+    letter-spacing: -0.06em;
+}
