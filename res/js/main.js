@@ -300,7 +300,11 @@ window.onload = function() {
         shrinkProgressHandle();
 
         if (animInterruptedByDrag) {
-            startAnim();
+            // don't resume animation at yearEnd just to figure out tickDelay 
+            //  milliseconds later that animation work is done
+            if (currentYear < yearEnd)
+                startAnim();
+            
             animInterruptedByDrag = false;
         }
     }
@@ -335,8 +339,6 @@ window.onload = function() {
     }
 
     function stopAnim() {
-        console.log("stopAnim() called!");
-
         hidePauseButton();
         showPlayButton();
 
@@ -346,8 +348,6 @@ window.onload = function() {
     }
 
     function startAnim() {
-        console.log("startAnim() called!");
-
         hidePlayButton();
         showPauseButton();
 

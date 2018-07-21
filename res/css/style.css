@@ -15,10 +15,9 @@ body {
 }
 body, 
 .cols, .rows,
-nav ul, nav ul li a,
-footer, footer #controls, footer #controls ul, 
-footer #controls ul li, footer #controls ul li a,
-#progress-bar, #current-year {
+nav ul, nav ul li,
+footer, footer #controls, footer #controls ul, footer #controls ul li, 
+footer #controls ul li a, #progress-bar, #current-year {
     display: flex;
 }
 .cols {
@@ -39,40 +38,36 @@ footer #controls ul {
     list-style-type: none;
 }
 nav ul li {
-    flex: 1;
-}
-nav ul li a {
     align-items: center;
     width: 100%;
     height: 60px;
     padding: 10px 10px 6px 10px;
-    text-decoration: none;
     border-bottom: 4px solid #fff;
     box-sizing: border-box;
 }
-nav ul li a:not(.active):hover {
+nav ul li:not(.active):hover {
     background-color: #f9f9f9;
     border-bottom-color: #eaeaea;
 }
-nav ul li a:not(.active):active {
+nav ul li:not(.active):active {
     background-color: #dedede;
     border-bottom-color: #c7c7c7;
 }
-nav ul li a.active {
+nav ul li.active {
     color: #0078a1;
     border-bottom-color: #0078a1;
     font-weight: bold;
 }
-nav ul li a .icon {
+nav ul li .icon {
     font-size: 3.2em;
     margin-right: 8px;
 }
-nav ul li a .title {
+nav ul li .title {
     font-size: 1.2em;
     word-spacing: 100vw;
     line-height: 1em;
 }
-nav ul li a, 
+nav ul li, 
 aside {
     color: #838383;
 }
@@ -127,19 +122,23 @@ footer {
     flex: 0 0 45px;
 }
 footer, footer #controls ul li a {
-    color: #fff;
+    color: rgba(255, 255, 255, 0.9);
 }
-footer #controls ul li a {
+footer #controls ul li {
     font-size: 1.7em;
     padding: 0 17px;
     align-items: center;
     text-decoration: none;
 }
-footer #controls ul li a:hover {
+footer #controls ul li:hover {
     background-color: rgba(0, 0, 0, 0.2);
 }
-footer #controls ul li a:active {
+footer #controls ul li:active {
     background-color: rgba(0, 0, 0, 0.4);
+}
+nav ul li,
+footer #controls ul li, #progress-bar #lines, #progress-bar #handle {
+    cursor: pointer;
 }
 
 #progress-bar {
@@ -149,15 +148,9 @@ footer #controls ul li a:active {
     flex-grow: 1;
     height: 35px;
 }
-#progress-bar .tick text {
-    fill: #fff;
-}
 #progress-bar .tick line,
 #progress-bar .domain {
     display: none;
-}
-#progress-bar #lines {
-    cursor: pointer;
 }
 #progress-bar #elapsed {
     fill: rgba(0, 0, 0, 0.3);
@@ -165,10 +158,13 @@ footer #controls ul li a:active {
 #progress-bar #remaining {
     fill: rgba(255, 255, 255, 0.2);
 }
+#progress-bar .tick text,
 #progress-bar #handle {
-    fill: #fff;
+    fill: rgba(255, 255, 255, 0.9);
+}
+#progress-bar #handle {
     stroke-width: 1.5px;
-    cursor: pointer;
+    
 }
 #current-year {
     margin: 0 15px;
