@@ -17,7 +17,7 @@ window.onload = function() {
     *    main()    *
     ***************/
     // placeholder data, replace with actual start and end years 
-    // fetched from the JSON file(s)
+    //  fetched from the JSON file(s)
     var yearStart = 2004,
         yearEnd = 2018;
     
@@ -205,10 +205,19 @@ window.onload = function() {
     }
     
     function progressBarLineDragStart() {
-        progressHandleDragStart();
+        expandProgressHandle();
+        dragStopAnim();
 
-        var mouseEventX = d3.event.sourceEvent.offsetX;
-        handleDragEvent(mouseEventX);
+        // firefox does not cope well with using
+        //  d3.event.sourceEvent.offsetX
+        //  for quick successive dragstart events (read: every second 
+        //  dragstart event has a completely wrong offsetX value).
+        // to mitigate that, a different method (which works fairly well in 
+        //  chrome as well) is used to compute mouse coordinates.
+        var dragStartClientMouseX = d3.event.sourceEvent.clientX;
+        var computedRelativeMouseX = 
+            dragStartClientMouseX - progressBarContainerClientRect.x;
+        handleDragEvent(computedRelativeMouseX);
     }
 
     function progressBarLineDrag() {
@@ -216,21 +225,41 @@ window.onload = function() {
     }
 
     function progressBarLineDragEnd() {
-        progressHandleDragEnd();
+        shrinkProgressHandle();
+        dragStartAnim();
     }
 
     function progressHandleDragStart() {
         expandProgressHandle();
+        dragStopAnim();
+    }
 
+    function progressHandleDrag() {
+        var mouseEventX = d3.event.x;
+        handleDragEvent(mouseEventX);
+    }
+
+    function progressHandleDragEnd() {
+        shrinkProgressHandle();
+        dragStartAnim();
+    }
+
+    function dragStopAnim() {
         if (animRunning) {
             stopAnim();
             animInterruptedByDrag = true;
         }
     }
 
-    function progressHandleDrag() {
-        var mouseEventX = d3.event.x;
-        handleDragEvent(mouseEventX);
+    function dragStartAnim() {
+        if (animInterruptedByDrag) {
+            // don't resume animation at yearEnd just to figure out after 
+            //  tickDelay that the animation work is done
+            if (currentYear < yearEnd)
+                startAnim();
+            
+            animInterruptedByDrag = false;
+        }
     }
 
     function handleDragEvent(x) {
@@ -294,19 +323,6 @@ window.onload = function() {
         currentX = progressBarAxisScale(year);
 
         progressHandle.attr({cx: currentX});
-    }
-
-    function progressHandleDragEnd() {
-        shrinkProgressHandle();
-
-        if (animInterruptedByDrag) {
-            // don't resume animation at yearEnd just to figure out tickDelay 
-            //  milliseconds later that animation work is done
-            if (currentYear < yearEnd)
-                startAnim();
-            
-            animInterruptedByDrag = false;
-        }
     }
 
     function expandProgressHandle() {
