@@ -71,6 +71,7 @@ nav ul li,
 aside {
     color: #838383;
 }
+
 #map {
     box-shadow: inset -7px 5px 35px -15px #838383,
                 inset 0px -10px 20px -15px #0078a1;
@@ -80,6 +81,17 @@ aside {
         box-shadow: inset -4px 2px 21px -12px #838383, 
                     inset 0px -8px 11px -13px #0078a1;
     }
+}
+/* BEGIN remove this part when map paint code gets done */
+#map .county {
+    fill: #0078a1;
+}
+/* END */
+#map .county:hover {
+    fill: #004d67;
+}
+#map .county:active {
+    fill: #003e52;
 }
 
 aside {

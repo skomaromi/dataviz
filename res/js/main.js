@@ -1,4 +1,247 @@
 window.onload = function() {
+    var topologyData, countyData,
+        s, m, p, n, 
+        yearStart = 1998,       // TODO: change this to null
+        yearEnd = 2016;         // TODO: change this to null too
+    var currentCategory = 0;
+
+    console.log("trying to loadJson()...");
+    console.log(loadJson("res/data/cro_regv3.json"));
+
+    d3.json("res/data/cro_regv3.json", function(e, c) {
+        topologyData = topojson.feature(c, c.objects.layer1).features;
+        console.log("logging from d3.json()");
+        console.log(topologyData);
+
+        // this all can happen only after JSON files are loaded
+        s = new SidebarData(countyData)
+        m = new InteractiveMap(topologyData, countyData, 
+            s.displayDataForCounty);
+
+        p = new Progress(yearStart, yearEnd, yearChangeHandler);
+        n = new Navbar(categoryChangeHandler);
+    });
+
+    /******************************
+    *    window event handlers    *
+    ******************************/
+    window.onresize = resizeHandler;
+
+    function resizeHandler() {
+        console.log("resized.");
+        m.resize();
+        p.resize();
+    }
+
+    function yearChangeHandler(year) {
+        console.log("tick, year "+year+"!");
+        m.show(currentCategory, year);
+    }
+
+    function categoryChangeHandler(idx) {
+        console.log("categoryChangeHandler("+idx+") - NOT IMPLEMENTED YET!");
+        
+        currentCategory = idx;
+
+        p.resetProgress();
+        m.show(currentCategory, yearStart);
+    }
+
+    function loadJson(path) {
+        var ret;
+        d3.json(path, function(error, data) {
+            ret = data;
+        });
+        return ret;
+    }
+}
+
+
+function Navbar(externalCategoryChangeHandler) {
+    var tabs = d3.selectAll("nav li");
+    tabs.on("click", tabClickHandler);
+
+    var activeCategory;
+
+    setActiveCategory(0);
+
+    function setActiveCategory(idx) {
+        activeCategory = idx;
+
+        setActiveTab(idx);
+        externalCategoryChangeHandler(idx);
+    }
+
+    function setActiveTab(idx) {
+        // flush other tabs' active state
+        tabs.attr({class: null});
+
+        var currentTab = d3.select(tabs[0][idx]);
+        currentTab.attr({class: "active"});
+    }
+
+    function tabClickHandler(d) {
+        var clickedTab = d3.select(this);
+        var clickedTabIdx = clickedTab.attr("id");
+
+        trySetActiveCategory(clickedTabIdx);
+    }
+
+    function trySetActiveCategory(idx) {
+        if (activeCategory != idx) {
+            setActiveCategory(idx);
+        }
+    }
+
+}
+
+
+function SidebarData(data) {
+    this.displayDataForCounty = function (county) {
+        console.log("displaying data for county " + county);
+    }
+}
+
+
+function InteractiveMap(topology, counties, externalRegionClickHandler) {
+    var topologyData = topology,
+        countyData = counties;
+    
+    var alreadyDrawn = false;
+    
+    var mapContainer = d3.select("#map");
+    var map = mapContainer.append("g");
+
+    var counties;
+
+    var projection = d3.geo.mercator()
+        .center([0, 10])
+        .rotate([-180, 0]);
+
+    var path = d3.geo.path()
+        .projection(projection);
+
+
+    /****************
+    *    methods    *
+    ****************/
+    this.show = function (category, year) {
+        tryDrawMap();
+        paintMap(category, year);
+    }
+
+    this.resize = function () {
+        adjustScaleAndPosition();
+    }
+
+    
+    /******************
+    *    functions    *
+    ******************/
+    function paintMap(category, year) {
+        // TODO: paint code here. 
+        // paint for data[category][year]
+        console.log("InteractiveMap::repaintMap("+category+", "+year+") - NOT IMPLEMENTED YET!");
+    }
+
+    function tryDrawMap() {
+        if (!alreadyDrawn) {
+            drawMap();
+
+            alreadyDrawn = true;
+        }
+    }
+
+    function drawMap() {
+        counties = map
+            .selectAll("path")
+            .data(topologyData)
+            .enter()
+            .append("path")
+                .attr({
+                    class: "county",
+                    id: function (d) { return d.id; },
+                    d: path
+                });
+        
+        adjustScaleAndPosition();
+    }
+
+    function adjustScaleAndPosition() {
+        // flush leftovers from last viewport size
+        map.attr({
+            transform: null
+        });
+        
+        var mapContainerClientRect = 
+                mapContainer.node().getBoundingClientRect(),
+            mapClientRect = 
+                map.node().getBoundingClientRect();
+        
+        var padding = 0.05 * min(mapContainerClientRect.width, 
+                mapContainerClientRect.height);
+        
+        
+        var width = mapClientRect.width,
+            containerWidth = mapContainerClientRect.width,
+            targetWidth = containerWidth - padding * 2,
+            widthRatio = targetWidth/width;
+
+        var height = mapClientRect.height,
+            containerHeight = mapContainerClientRect.height,
+            targetHeight = containerHeight - padding * 2,
+            heightRatio = targetHeight/height;
+
+        var ratio = min(widthRatio, heightRatio);
+        
+        // set ratio to 0 in case it gets below zero to prevent map being 
+        //  flipped
+        ratio = ratio < 0 ? 0 : ratio;
+
+        map.attr({
+            transform: "scale("+ratio+")"
+        });
+
+        // update map group client rectangle after resizing as it now has 
+        //  new dimensions
+        mapClientRect = map.node().getBoundingClientRect();
+
+        var actualX = mapClientRect.x;
+        var expectedX = mapContainerClientRect.width / 2
+             - mapClientRect.width / 2;
+        var diffX = expectedX - actualX;
+
+        // map svg container starts from x = 0, so there is not much to 
+        //  deal with. however, the starting y coordinate is a bit tricky 
+        //  as above the map container is navbar. to compute the center y 
+        //  coordinate, we need to factor in the navbar height.
+        var actualAbsoluteY = mapClientRect.y;
+        var actualRelativeY = actualAbsoluteY - mapContainerClientRect.y;
+        var expectedRelativeY = mapContainerClientRect.height / 2
+             - mapClientRect.height / 2;
+        var diffY = expectedRelativeY - actualRelativeY;
+
+        map.attr({
+            // translate, and then scale. any other order results in map 
+            //  *not* being centered.
+            transform: "translate("+diffX+", "+diffY+") scale("+ratio+")"
+        });
+    }
+
+    function min(a, b) {
+        if (a < b)
+            return a;
+        else
+            return b;
+    }
+
+    function regionClicked(regionId) {
+        externalRegionClickHandler(regionId);
+    }
+}
+
+
+function Progress(start, end, externalYearChangeHandler) {
     /******************
     *    constants    *
     ******************/
@@ -13,13 +256,12 @@ window.onload = function() {
     
     var progressBarAxisGroupY = yStart + progressBarAxisGroupTicksYOffset;
 
+
     /***************
     *    main()    *
     ***************/
-    // placeholder data, replace with actual start and end years 
-    //  fetched from the JSON file(s)
-    var yearStart = 2004,
-        yearEnd = 2018;
+    var yearStart = start,
+        yearEnd = end;
     
     var currentYear = yearStart;
     var currentYearIndicator = d3.select("#current-year");
@@ -126,19 +368,25 @@ window.onload = function() {
 
     var progressHandle = makeProgressHandle();
 
-    
-    /********************************************
-    *    register window event handlers here    *
-    ********************************************/
-    window.onresize = windowResizeHandler;
+   
+    /****************
+    *    methods    *
+    ****************/
+    this.resetProgress = function () {
+        if (animRunning)
+            stopAnim();
+        setCurrentYear(yearStart);
+    }
+
+    this.resize = function () {
+        windowResizeHandler();
+    }
 
     
     /******************
     *    functions    *
     ******************/
     function windowResizeHandler() {
-        console.log("windowResizeHandler() called!");
-        
         mapClientRect = map.node().getBoundingClientRect();
         progressBarContainerClientRect = progressBarContainer
             .node()
@@ -281,6 +529,12 @@ window.onload = function() {
     }
 
     function updateCurrentYear(year) {
+        setCurrentYear(year);
+
+        externalYearChangeHandler(year);
+    }
+
+    function setCurrentYear(year) {
         currentYear = year;
 
         setCurrentYearIndicatorText(year);
