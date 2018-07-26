@@ -1,32 +1,25 @@
 window.onload = function() {
-    var topologyData, countyData,
-        s, m, p, n, 
-        yearStart = 1998,       // TODO: change this to null
-        yearEnd = 2016;         // TODO: change this to null too
+    var s, m, p, n, 
+        yearStart, yearEnd;
     var currentCategory = 0;
 
-    console.log("trying to loadJson()...");
-    console.log(loadJson("res/data/cro_regv3.json"));
+    var loadPaths = [
+        // map TopoJSON
+        "res/data/cro_regv3.json",
 
-    d3.json("res/data/cro_regv3.json", function(e, c) {
-        topologyData = topojson.feature(c, c.objects.layer1).features;
-        console.log("logging from d3.json()");
-        console.log(topologyData);
+        // datasets
+        "res/data/dataset_broadband.json",
 
-        // this all can happen only after JSON files are loaded
-        s = new SidebarData(countyData)
-        m = new InteractiveMap(topologyData, countyData, 
-            s.displayDataForCounty);
+        // county names
+        "res/data/data_names.json"
+    ];
 
-        p = new Progress(yearStart, yearEnd, yearChangeHandler);
-        n = new Navbar(categoryChangeHandler);
-    });
+    loadAll();
 
-    /******************************
-    *    window event handlers    *
-    ******************************/
-    window.onresize = resizeHandler;
 
+    /******************
+    *    functions    *
+    ******************/
     function resizeHandler() {
         console.log("resized.");
         m.resize();
@@ -35,24 +28,84 @@ window.onload = function() {
 
     function yearChangeHandler(year) {
         console.log("tick, year "+year+"!");
-        m.show(currentCategory, year);
+        m.show(currentCategory, year, yearStart, yearEnd);
     }
 
     function categoryChangeHandler(idx) {
-        console.log("categoryChangeHandler("+idx+") - NOT IMPLEMENTED YET!");
-        
         currentCategory = idx;
 
         p.resetProgress();
-        m.show(currentCategory, yearStart);
+        m.show(currentCategory, yearStart, yearStart, yearEnd);
     }
 
-    function loadJson(path) {
-        var ret;
-        d3.json(path, function(error, data) {
-            ret = data;
-        });
-        return ret;
+    function loadAll() {
+        var q = queue();
+
+        for (var i = 0; i < loadPaths.length; i++)
+            q.defer(d3.json, loadPaths[i]);
+
+        q.awaitAll(loadingFinished);
+    }
+
+    function loadingFinished(error, results) {
+        // topology data
+        var topology = results[0];
+        var topologyData = topojson
+            .feature(topology, topology.objects.layer1)
+            .features;
+        
+        // county data
+        var countyData = new Array();
+        
+        // this will allow us to use
+        //  countyData[category].values[county][year]
+        //  syntax.
+        for (var i = 1; i < results.length - 1; i++) {
+            var categoryRaw = results[i];
+            var category = {
+                title: categoryRaw.title,
+                description: categoryRaw.description,
+                shortTitle: categoryRaw.shortTitle,
+                values: new Array()
+            };
+            
+            var counties = categoryRaw.values;
+
+            for (var j = 0; j < counties.length; j++) {
+                var years = counties[j];
+                var county = new Array();
+                
+                for (var k = 0; k < years.length; k++) {
+                    var y = years[k];
+                    county[y.year] = y.value;
+                }
+
+                category.values.push(county);
+            }
+
+            countyData.push(category);
+        }
+        
+        // values array from zeroth category, zeroth county.
+        // assuming all datasets will have the same timespan.
+        var yC0C0 = results[1].values[0];
+        yearStart = yC0C0[0].year;
+        yearEnd = yC0C0[yC0C0.length - 1].year;
+
+        // county names
+        var countyNames = results[results.length - 1].names;
+
+        s = new SidebarData(countyData, countyNames);
+        m = new InteractiveMap(topologyData, countyData, countyNames,
+            s.displayDataForCounty);
+
+        p = new Progress(yearStart, yearEnd, yearChangeHandler);
+        n = new Navbar(categoryChangeHandler);
+        
+        // registering the onresize handler before instantiating object above 
+        //  would result in resize events triggering methods of nonexistent 
+        //  objects
+        window.onresize = resizeHandler;
     }
 }
 
@@ -96,19 +149,46 @@ function Navbar(externalCategoryChangeHandler) {
 }
 
 
-function SidebarData(data) {
+function SidebarData(countyData, countyNames) {
     this.displayDataForCounty = function (county) {
         console.log("displaying data for county " + county);
     }
 }
 
 
-function InteractiveMap(topology, counties, externalRegionClickHandler) {
+function InteractiveMap(topology, counties, names, externalRegionClickHandler) {
+    /******************
+    *    constants    *
+    ******************/
+    var colorLowest = "#a8d1df",
+        colorHighest = "#0078a1",
+        tooltipXYSpacing = 8;
+
+    
     var topologyData = topology,
-        countyData = counties;
+        countyData = counties,
+        countyNames = names;
+
+    var tooltipContainer = d3.select("#tooltip"),
+        tooltipCountyName = d3.select("#tooltip #county"),
+        tooltipDataName = d3.select("#tooltip #data #name"),
+        tooltipDataValue = d3.select("#tooltip #data #value");
     
-    var alreadyDrawn = false;
+    var scaleMin = 0, 
+        scaleMax,
+        colorScale;
+
+    var currentCategory,
+        currentYear,
+        currentCounty,
+        currentCountyDomSelection,
+        currentSelectedCounty = null;
     
+    var alreadyDrawn = false,
+        tooltipVisible = false;
+    
+    var colorInterpolator = d3.interpolate(colorLowest, colorHighest);
+
     var mapContainer = d3.select("#map");
     var map = mapContainer.append("g");
 
@@ -125,9 +205,10 @@ function InteractiveMap(topology, counties, externalRegionClickHandler) {
     /****************
     *    methods    *
     ****************/
-    this.show = function (category, year) {
+    this.show = function (category, year, start, end) {
         tryDrawMap();
-        paintMap(category, year);
+        paintMap(category, year, start, end);
+        tryUpdateTooltipText();
     }
 
     this.resize = function () {
@@ -138,14 +219,41 @@ function InteractiveMap(topology, counties, externalRegionClickHandler) {
     /******************
     *    functions    *
     ******************/
-    function paintMap(category, year) {
-        // TODO: paint code here. 
-        // paint for data[category][year]
-        console.log("InteractiveMap::repaintMap("+category+", "+year+") - NOT IMPLEMENTED YET!");
+    function paintMap(category, year, start, end) {
+        if (currentCategory !== category) {
+            var data = new Array();
+            var values = countyData[category].values;
+
+            for (var i = 0; i < values.length; i++) {
+                for (var j = start; j <= end; j++) {
+                    data.push(values[i][j]);
+                }
+            }
+
+            scaleMax = d3.max(data);
+
+            colorScale = d3.scale.linear()
+                .domain([scaleMin, scaleMax])
+                .nice();
+
+            currentCategory = category;
+        }
+        
+        counties.attr({
+            fill: function(d, county) { 
+                return colorInterpolator(
+                    colorScale(countyData[category].values[county][year])
+                );
+            }
+        });
+
+        currentYear = year;
     }
 
     function tryDrawMap() {
         if (!alreadyDrawn) {
+            hideTooltip();
+
             drawMap();
 
             alreadyDrawn = true;
@@ -160,11 +268,71 @@ function InteractiveMap(topology, counties, externalRegionClickHandler) {
             .append("path")
                 .attr({
                     class: "county",
-                    id: function (d) { return d.id; },
                     d: path
-                });
+                })
+                .on("mouseenter", regionMouseEnterHandler)
+                .on("mousemove", regionMouseMoveHandler)
+                .on("mouseleave", regionMouseLeaveHandler)
+                .on("click", regionClickHandler);
         
         adjustScaleAndPosition();
+    }
+
+    function tryUpdateTooltipText() {
+        if (tooltipVisible) {
+            updateTooltipText();
+        }
+    }
+
+    function regionMouseEnterHandler(d, county) {
+        setTooltipPosition(
+            d3.event.clientX, 
+            d3.event.clientY
+        );
+
+        currentCounty = county;
+
+        updateTooltipText();
+    }
+
+    function regionMouseMoveHandler() {
+        setTooltipPosition(
+            d3.event.clientX, 
+            d3.event.clientY
+        );
+    }
+
+    function regionMouseLeaveHandler() {
+        hideTooltip();
+    }
+
+    function setTooltipPosition(x, y) {
+        tooltipContainer.style({
+            left: x + tooltipXYSpacing,
+            top: y + tooltipXYSpacing,
+            display: "block"
+        });
+
+        tooltipVisible = true;
+    }
+
+    function hideTooltip() {
+        tooltipContainer.attr({
+            style: null
+        });
+
+        tooltipVisible = false;
+    }
+
+    function updateTooltipText() {
+        var countyName = countyNames[currentCounty],
+            dataName = countyData[currentCategory].shortTitle,
+            dataValue = 
+                countyData[currentCategory].values[currentCounty][currentYear];
+
+        tooltipCountyName.html(countyName);
+        tooltipDataName.html(dataName + ":");
+        tooltipDataValue.html(dataValue);
     }
 
     function adjustScaleAndPosition() {
@@ -235,8 +403,37 @@ function InteractiveMap(topology, counties, externalRegionClickHandler) {
             return b;
     }
 
-    function regionClicked(regionId) {
-        externalRegionClickHandler(regionId);
+    function regionClickHandler(d, county) {
+        var newRegionSelected = false;
+        var domObjSelected = d3.select(this);
+
+        if (currentSelectedCounty == null) {
+            console.log("last region did not exist");
+            domObjSelected.attr({
+                id: "selected"
+            });
+
+            currentSelectedCounty = county;
+            currentCountyDomSelection = domObjSelected;
+            newRegionSelected = true;
+        }
+        else if (currentSelectedCounty != county) {
+            console.log("last region different than this one");
+            currentCountyDomSelection.attr({
+                id: null
+            });
+
+            domObjSelected.attr({
+                id: "selected"
+            });
+
+            currentSelectedCounty = county;
+            currentCountyDomSelection = domObjSelected;
+            newRegionSelected = true;
+        }
+
+        if (newRegionSelected)
+            externalRegionClickHandler(county);
     }
 }
 

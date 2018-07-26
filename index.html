@@ -3,10 +3,18 @@
         <title>Data Visualization - Phase 1 - Layout</title>
         <script src="http://d3js.org/d3.v3.min.js"></script>
         <script src="http://d3js.org/topojson.v1.min.js"></script>
+        <script src="http://d3js.org/queue.v1.min.js"></script>
         <link rel="stylesheet" type="text/css" href="res/css/style.css" />
         <script src="res/js/main.js"></script>
     </head>
     <body>
+        <div id="tooltip">
+            <p id="county"></p>
+            <p id="data">
+                <span id="name"></span>
+                <span id="value"></span>
+            </p>
+        </div>
         <div class="rows">
             <div class="cols">
                 <div class="rows">
@@ -54,7 +62,7 @@
                     <p class="attr">
                         <span class="attr-title">
                             Povr&scaron;ina:
-                        </span>&nbsp;
+                        </span>
                         <span class="attr-value">
                             19230 km<sup>2</sup></sup>
                         </span>
@@ -62,7 +70,7 @@
                     <p class="attr">
                         <span class="attr-title">
                             Broj stanovnika:
-                        </span>&nbsp;
+                        </span>
                         <span class="attr-value">
                             3789435
                         </span>
@@ -70,7 +78,7 @@
                     <p class="attr">
                         <span class="attr-title">
                             Glavni grad:
-                        </span>&nbsp;
+                        </span>
                         <span class="attr-value">
                             Osijek
                         </span>
@@ -78,7 +86,7 @@
                     <p class="attr">
                         <span class="attr-title">
                             Broj op&cacute;ina:
-                        </span>&nbsp;
+                        </span>
                         <span class="attr-value">
                             42
                         </span>
@@ -86,7 +94,7 @@
                     <p class="attr">
                         <span class="attr-title">
                             Broj gradova:
-                        </span>&nbsp;
+                        </span>
                         <span class="attr-value">
                             91528
                         </span>

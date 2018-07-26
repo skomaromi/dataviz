@@ -63,9 +63,13 @@ nav ul li .icon {
     margin-right: 8px;
 }
 nav ul li .title {
-    font-size: 1.2em;
     word-spacing: 100vw;
     line-height: 1em;
+}
+nav ul li .title,
+aside h3,
+#tooltip {
+    font-size: 1.2em;
 }
 nav ul li, 
 aside {
@@ -82,16 +86,24 @@ aside {
                     inset 0px -8px 11px -13px #0078a1;
     }
 }
-/* BEGIN remove this part when map paint code gets done */
-#map .county {
-    fill: #0078a1;
-}
-/* END */
 #map .county:hover {
     fill: #004d67;
 }
 #map .county:active {
     fill: #003e52;
+}
+#map .county#selected {
+    fill: #006081;
+}
+#tooltip {
+    display: none;
+    position: absolute;
+    background-color: #838383;
+    padding: 10px;
+    color: #fff;
+}
+#tooltip #county {
+    font-weight: bold;
 }
 
 aside {
@@ -107,6 +119,7 @@ aside h2 {
 aside .attr {
     margin-bottom: .4em;
     margin-left: 1em;
+    font-size: 1.1em;
 }
 aside .attr-title {
     font-weight: bold;

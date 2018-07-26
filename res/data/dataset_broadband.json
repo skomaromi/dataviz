@@ -1,7 +1,7 @@
 {
     "title": "Razvoj broja prikljucaka kroz vrijeme",
     "description": "Prikaz broja prikljucaka u kucanstvima.",
-    "shortTitle": "Broj prikljucaka",
+    "shortTitle": "Broj priklju&ccaron;aka",
     "values": [
         [
             { "year": 2007, "value": 11968 },
