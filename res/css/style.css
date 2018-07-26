@@ -16,6 +16,7 @@ body {
 body, 
 .cols, .rows,
 nav ul, nav ul li,
+#map, #legend .item,
 footer, footer #controls, footer #controls ul, footer #controls ul li, 
 footer #controls ul li a, #progress-bar, #current-year {
     display: flex;
@@ -68,6 +69,7 @@ nav ul li .title {
 }
 nav ul li .title,
 aside h3,
+#legend,
 #tooltip {
     font-size: 1.2em;
 }
@@ -77,6 +79,7 @@ aside {
 }
 
 #map {
+    position: relative;
     box-shadow: inset -7px 5px 35px -15px #838383,
                 inset 0px -10px 20px -15px #0078a1;
 }
@@ -85,6 +88,10 @@ aside {
         box-shadow: inset -4px 2px 21px -12px #838383, 
                     inset 0px -8px 11px -13px #0078a1;
     }
+}
+#map svg {
+    display: flex;
+    flex-grow: 1;
 }
 #map .county:hover {
     fill: #004d67;
@@ -95,12 +102,34 @@ aside {
 #map .county#selected {
     fill: #006081;
 }
+#legend {
+    position: absolute;
+    bottom: 32px;
+    right: 32px;
+    box-shadow: 0px 3px 10px -1px #838383;
+    padding: 10px;
+}
+#legend .item {
+    align-items: end;
+}
+#legend .item:not(:last-child) {
+    margin-bottom: .4em;
+}
+#legend .item .color, #legend .item .value {
+    display: inline-flex;
+}
+#legend .item .color {
+    width: 12px;
+    height: 12px;
+    margin-right: .3em;
+}
 #tooltip {
     display: none;
     position: absolute;
     background-color: #838383;
     padding: 10px;
     color: #fff;
+    z-index: 2;
 }
 #tooltip #county {
     font-weight: bold;

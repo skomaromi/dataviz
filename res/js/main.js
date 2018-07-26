@@ -21,13 +21,11 @@ window.onload = function() {
     *    functions    *
     ******************/
     function resizeHandler() {
-        console.log("resized.");
         m.resize();
         p.resize();
     }
 
     function yearChangeHandler(year) {
-        console.log("tick, year "+year+"!");
         m.show(currentCategory, year, yearStart, yearEnd);
     }
 
@@ -86,8 +84,8 @@ window.onload = function() {
             countyData.push(category);
         }
         
-        // values array from zeroth category, zeroth county.
-        // assuming all datasets will have the same timespan.
+        // values array from zeroth category, zeroth county
+        // assuming all datasets will have the same timespan
         var yC0C0 = results[1].values[0];
         yearStart = yC0C0[0].year;
         yearEnd = yC0C0[yC0C0.length - 1].year;
@@ -145,13 +143,17 @@ function Navbar(externalCategoryChangeHandler) {
             setActiveCategory(idx);
         }
     }
-
 }
 
 
 function SidebarData(countyData, countyNames) {
     this.displayDataForCounty = function (county) {
-        console.log("displaying data for county " + county);
+        if (county == null) {
+            console.log("not displaying data.");
+        }
+        else {
+            console.log("displaying data for county " + county);
+        }
     }
 }
 
@@ -160,9 +162,10 @@ function InteractiveMap(topology, counties, names, externalRegionClickHandler) {
     /******************
     *    constants    *
     ******************/
-    var colorLowest = "#a8d1df",
+    var colorLowest = "#cce4ec",
         colorHighest = "#0078a1",
-        tooltipXYSpacing = 8;
+        tooltipXYSpacing = 8,
+        legendItemCount = 5;
 
     
     var topologyData = topology,
@@ -174,9 +177,7 @@ function InteractiveMap(topology, counties, names, externalRegionClickHandler) {
         tooltipDataName = d3.select("#tooltip #data #name"),
         tooltipDataValue = d3.select("#tooltip #data #value");
     
-    var scaleMin = 0, 
-        scaleMax,
-        colorScale;
+    var colorScale;
 
     var currentCategory,
         currentYear,
@@ -187,12 +188,13 @@ function InteractiveMap(topology, counties, names, externalRegionClickHandler) {
     var alreadyDrawn = false,
         tooltipVisible = false;
     
-    var colorInterpolator = d3.interpolate(colorLowest, colorHighest);
+    var mapContainer = d3.select("#map svg"),
+        legendContainer = d3.select("#legend");
 
-    var mapContainer = d3.select("#map");
     var map = mapContainer.append("g");
 
-    var counties;
+    var counties,
+        legend;
 
     var projection = d3.geo.mercator()
         .center([0, 10])
@@ -219,35 +221,83 @@ function InteractiveMap(topology, counties, names, externalRegionClickHandler) {
     /******************
     *    functions    *
     ******************/
-    function paintMap(category, year, start, end) {
-        if (currentCategory !== category) {
+    function paintMap(category, year, start, end) {        
+        if (currentCategory != category) {
             var data = new Array();
             var values = countyData[category].values;
-
+            
             for (var i = 0; i < values.length; i++) {
                 for (var j = start; j <= end; j++) {
                     data.push(values[i][j]);
                 }
             }
 
-            scaleMax = d3.max(data);
-
             colorScale = d3.scale.linear()
-                .domain([scaleMin, scaleMax])
+                .domain([
+                    d3.min(data), 
+                    d3.max(data)
+                ])
+                .range([colorLowest, colorHighest])
                 .nice();
-
+            
+            if (currentCategory != null) {
+                legend.remove();
+            }
+            makeLegend();
+            
             currentCategory = category;
         }
-        
+
         counties.attr({
             fill: function(d, county) { 
-                return colorInterpolator(
-                    colorScale(countyData[category].values[county][year])
-                );
+                return colorScale(countyData[category].values[county][year]);
             }
         });
 
         currentYear = year;
+    }
+
+    function makeLegend() {
+        var domain = colorScale.domain();
+        var min = domain[0],
+            max = domain[1];
+        
+        var range = d3.range(1, legendItemCount + 1);
+        var values = new Array();
+        
+        for (var i = 0; i < legendItemCount; i++) {
+            var value = range[i] / legendItemCount * max;
+            var color = colorScale(value);
+            values.push({
+                value: value,
+                color: color
+            });
+        }
+
+        var legend = legendContainer
+            .selectAll(".item")
+            .data(values)
+            .enter()
+            .append("p")
+                .attr({
+                    class: "item"
+                });
+        
+        legend
+            .append("span")
+            .attr({
+                class: "color"
+            })
+            .style({
+                "background-color": function (d) { return d.color; }
+            });
+        
+        legend
+            .append("span")
+            .attr({
+                class: "value"
+            })
+            .html(function (d) { return d.value; });
     }
 
     function tryDrawMap() {
@@ -255,6 +305,8 @@ function InteractiveMap(topology, counties, names, externalRegionClickHandler) {
             hideTooltip();
 
             drawMap();
+
+            emitRegionChangedSignal();
 
             alreadyDrawn = true;
         }
@@ -274,6 +326,8 @@ function InteractiveMap(topology, counties, names, externalRegionClickHandler) {
                 .on("mousemove", regionMouseMoveHandler)
                 .on("mouseleave", regionMouseLeaveHandler)
                 .on("click", regionClickHandler);
+        
+        mapContainer.on("click", mapContainerClickHandler);
         
         adjustScaleAndPosition();
     }
@@ -408,7 +462,6 @@ function InteractiveMap(topology, counties, names, externalRegionClickHandler) {
         var domObjSelected = d3.select(this);
 
         if (currentSelectedCounty == null) {
-            console.log("last region did not exist");
             domObjSelected.attr({
                 id: "selected"
             });
@@ -418,7 +471,6 @@ function InteractiveMap(topology, counties, names, externalRegionClickHandler) {
             newRegionSelected = true;
         }
         else if (currentSelectedCounty != county) {
-            console.log("last region different than this one");
             currentCountyDomSelection.attr({
                 id: null
             });
@@ -433,7 +485,26 @@ function InteractiveMap(topology, counties, names, externalRegionClickHandler) {
         }
 
         if (newRegionSelected)
-            externalRegionClickHandler(county);
+            emitRegionChangedSignal();
+    }
+
+    function mapContainerClickHandler() {
+        var mouseCurrentlyOnRegion = tooltipVisible;
+
+        if (!mouseCurrentlyOnRegion && currentSelectedCounty != null) {
+            currentCountyDomSelection.attr({
+                id: null
+            });
+
+            currentSelectedCounty = null;
+            currentCountyDomSelection = null;
+
+            emitRegionChangedSignal();
+        }
+    }
+
+    function emitRegionChangedSignal() {
+        externalRegionClickHandler(currentSelectedCounty);
     }
 }
 
