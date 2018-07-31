@@ -9,7 +9,7 @@ body, text {
 }
 body {
     font-size: 62.5%;
-    letter-spacing: -0.04em;
+    letter-spacing: -.04em;
     height: 100vh;
     user-select: none;
     overflow-y: hidden;
@@ -114,9 +114,6 @@ aside {
     box-shadow: 0px 3px 10px -1px #838383;
     background-color: #fff;
 }
-#legend .item {
-    align-items: end;
-}
 #legend .item:not(:last-child) {
     margin-bottom: .4em;
 }
@@ -136,7 +133,7 @@ aside {
     color: #fff;
     z-index: 2;
 }
-#map-tooltip #county {
+#map-tooltip .county {
     font-weight: bold;
 }
 
@@ -149,23 +146,28 @@ aside {
 aside div:last-child {
     margin-bottom: 20px;
 }
-aside #category {
+aside .category {
     margin-bottom: 4em;
 }
-aside #county #not-selected {
+aside .category #title {
+    font-size: 1.5em;
+    font-weight: bold;
+    line-height: initial;
+}
+aside .county #not-selected {
     font-style: italic;
 }
-aside #county #not-selected.hidden {
+aside .county #not-selected.hidden {
     display: none;
 }
-aside #county #selected.hidden {
+aside .county #selected.hidden {
     height: 0;
     overflow-y: hidden;
 }
-aside #county #name {
+aside .county .name {
     font-weight: bold;
 }
-aside h2 {
+aside h2, aside .category #title {
     margin-bottom: .6em;
 }
 aside p {
@@ -213,7 +215,7 @@ aside #graphs .graph .cursor-circle {
 }
 .graph-tooltip .year {
     font-weight: bold;
-    font-size: 0.8em;
+    font-size: .8em;
 }
 .graph-tooltip::after {
     width: 0;
@@ -233,7 +235,7 @@ footer {
     z-index: 3;
 }
 footer, footer #controls ul li a {
-    color: rgba(255, 255, 255, 0.9);
+    color: rgba(255, 255, 255, .9);
 }
 footer #controls ul li {
     font-size: 1.7em;
@@ -242,12 +244,13 @@ footer #controls ul li {
     text-decoration: none;
 }
 footer #controls ul li:hover {
-    background-color: rgba(0, 0, 0, 0.2);
+    background-color: rgba(0, 0, 0, .2);
 }
 footer #controls ul li:active {
-    background-color: rgba(0, 0, 0, 0.4);
+    background-color: rgba(0, 0, 0, .4);
 }
 nav ul li,
+#map .county,
 footer #controls ul li, #progress-bar #lines, #progress-bar #handle {
     cursor: pointer;
 }
@@ -264,14 +267,14 @@ footer #controls ul li, #progress-bar #lines, #progress-bar #handle {
     display: none;
 }
 #progress-bar #elapsed {
-    fill: rgba(0, 0, 0, 0.3);
+    fill: rgba(0, 0, 0, .3);
 }
 #progress-bar #remaining {
-    fill: rgba(255, 255, 255, 0.2);
+    fill: rgba(255, 255, 255, .2);
 }
 #progress-bar .tick text,
 #progress-bar #handle {
-    fill: rgba(255, 255, 255, 0.9);
+    fill: rgba(255, 255, 255, .9);
 }
 #progress-bar #handle {
     stroke-width: 1.5px;   
@@ -281,5 +284,5 @@ footer #controls ul li, #progress-bar #lines, #progress-bar #handle {
     align-items: center;
     font-weight: bolder;
     font-size: 2.4em;
-    letter-spacing: -0.06em;
+    letter-spacing: -.06em;
 }

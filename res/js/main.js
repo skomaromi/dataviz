@@ -15,7 +15,7 @@ window.onload = function() {
         "res/data/dataset_broadband.json",
         "res/data/dataset_industry.json",
         "res/data/dataset_tourism.json",
-        "res/data/dataset_UNKNOWN.json",
+        "res/data/dataset_environment.json",
 
         // general county data
         "res/data/data_county.json"
@@ -146,7 +146,7 @@ window.onload = function() {
 
         unhideUi();
     }
-}
+};
 
 
 function Navbar(externalCategoryChangeHandler) {
@@ -179,7 +179,7 @@ function Navbar(externalCategoryChangeHandler) {
         currentTab.attr({class: "active"});
     }
 
-    function tabClickHandler(d) {
+    function tabClickHandler() {
         var clickedTab = d3.select(this);
         var clickedTabIdx = clickedTab.attr("id");
 
@@ -187,7 +187,7 @@ function Navbar(externalCategoryChangeHandler) {
     }
 
     function trySetActiveCategory(idx) {
-        if (activeCategory != idx) {
+        if (activeCategory !== idx) {
             setActiveCategory(idx);
         }
     }
@@ -204,23 +204,23 @@ function Sidebar(categories, counties, start, end) {
         yearEnd = end;
     
     var currentCategory,
-        currentCounty;
+        currentCounty = null;
     
-    var categoryTitle = d3.select("#category #title"),
-        categoryDescription = d3.select("#category #description"),
-        countyDataArea = d3.select("#county #selected"),
+    var categoryTitle = d3.select("aside .category #title"),
+        categoryDescription = d3.select("aside .category #description"),
+        countyDataArea = d3.select("aside .county #selected"),
 
-        countyName = d3.select("#county #name"),
-        countyArea = d3.select("#county #area"),
-        countyPopulation = d3.select("#county #population"),
-        countySeat = d3.select("#county #seat"),
-        countyCities = d3.select("#county #cities"),
-        countyMunicipalities = d3.select("#county #municipalities"),
+        countyName = d3.select("aside .county .name"),
+        countyArea = d3.select("aside .county #area"),
+        countyPopulation = d3.select("aside .county #population"),
+        countySeat = d3.select("aside .county #seat"),
+        countyCities = d3.select("aside .county #cities"),
+        countyMunicipalities = d3.select("aside .county #municipalities"),
 
-        countyGraphsContainer = d3.select("#county #graphs"),
-        countyNotSelectedMessage = d3.select("#county #not-selected");
+        countyGraphsContainer = d3.select("aside .county #graphs"),
+        countyNotSelectedMessage = d3.select("aside .county #not-selected");
     
-    var graphs,
+    var graphs = null,
         graphObjs = [];
     
     d3.select("aside").on("scroll", scrollEventDispatcher);
@@ -230,34 +230,34 @@ function Sidebar(categories, counties, start, end) {
     *    methods    *
     ****************/
     this.show = function (category, county) {
-        if (currentCategory != category) {
+        if (currentCategory !== category) {
             currentCategory = category;
 
             updateCategoryInfo();
         }
 
         updateCountySection(county);
-    }
+    };
 
 
     /******************
     *    functions    *
     ******************/
     function updateCountySection(county) {
-        if (currentCounty == null && county != null) {
+        if (currentCounty === null && county !== null) {
             hideNotSelectedMessage();
             currentCounty = county;
             
             populateCountySection();
             showCountyData();
         }
-        else if (currentCounty != null && county == null) {
+        else if (currentCounty !== null && county === null) {
             hideCountyData();
             showNotSelectedMessage();
 
             currentCounty = county;
         }
-        else if (currentCounty != county) {
+        else if (currentCounty !== county) {
             currentCounty = county;
             populateCountySection();
         }
@@ -272,7 +272,7 @@ function Sidebar(categories, counties, start, end) {
         countyCities.html(county.cities);
         countyMunicipalities.html(county.municipalities);
 
-        if (graphs != null) {
+        if (graphs !== null) {
             graphs.remove();
             d3.selectAll(".graph-tooltip").remove();
             graphObjs = [];
@@ -316,7 +316,7 @@ function Sidebar(categories, counties, start, end) {
 
     function graphHoverEventDispatcher(id, year) {
         for (var i = 0; i < graphObjs.length; i++) {
-            if (i != id)
+            if (i !== id)
                 graphObjs[i].signalReceiver(year);
         }
     }
@@ -358,7 +358,7 @@ function Sidebar(categories, counties, start, end) {
     }
 }
 
-function SidebarGraph(data, category, county, svg, tooltip, start, end,
+function SidebarGraph(_data, _category, _county, _svg, _tooltip, _start, _end,
     externalGraphHoverHandler) {
     /******************
     *    constants    *
@@ -372,19 +372,19 @@ function SidebarGraph(data, category, county, svg, tooltip, start, end,
     /***************
     *    init()    *
     ***************/
-    var data = data,
-        category = category,
-        county = county,
-        svg = svg,
-        tooltip = tooltip,
-        yearStart = start,
-        yearEnd = end;
+    var data = _data,
+        category = _category,
+        county = _county,
+        svg = _svg,
+        tooltip = _tooltip,
+        yearStart = _start,
+        yearEnd = _end;
     
     var tooltipYear,
         tooltipValue;
     
     var svgWidth, svgHeight, xScale, yScale, line, cursorLine, cursorCircle, 
-        currentYear, currentX, currentY;
+        currentYear = null, currentX, currentY;
     
     var tooltipVisible = false;
 
@@ -395,22 +395,22 @@ function SidebarGraph(data, category, county, svg, tooltip, start, end,
     *    methods    *
     ****************/
     this.signalReceiver = function (year) {
-        if (currentYear == null && year != null) {
+        if (currentYear === null && year !== null) {
             tryUpdateGraphIndicators(year);
             showGraphIndicators();
         }
-        else if (currentYear != null && year == null) {
+        else if (currentYear !== null && year === null) {
             hideGraphIndicators();
         }
-        else if (currentYear != year) {
+        else if (currentYear !== year) {
             tryUpdateGraphIndicators(year);
         }
-    }
+    };
 
     this.scrollHandler = function () {
         if (tooltipVisible)
             setTooltipPosition();
-    }
+    };
 
 
     /******************
@@ -476,7 +476,7 @@ function SidebarGraph(data, category, county, svg, tooltip, start, end,
 
         line = d3.svg.line()
             .x(function (d, i) { return xScale(yearStart + i); })
-            .y(function (d, i) { return yScale(d); });
+            .y(function (d) { return yScale(d); });
         
         svg.append("path")
             .datum(valuesUnsparsed)
@@ -538,7 +538,7 @@ function SidebarGraph(data, category, county, svg, tooltip, start, end,
     }
 
     function tryUpdateGraphIndicators(year) {
-        if (currentYear != year) {
+        if (currentYear !== year) {
             updateGraphIndicators(year);
         }
     }
@@ -618,8 +618,8 @@ function SidebarGraph(data, category, county, svg, tooltip, start, end,
                 tooltipClientRect.height / 2;
 
         tooltip.style({
-            left: tooltipPositionLeft,
-            top: tooltipPositionTop
+            left: tooltipPositionLeft + "px",
+            top: tooltipPositionTop + "px"
         });
     }
 
@@ -669,7 +669,7 @@ function SidebarGraph(data, category, county, svg, tooltip, start, end,
 }
 
 
-function InteractiveMap(topology, categories, countyData, 
+function InteractiveMap(_topology, _categories, _counties, 
     externalRegionClickHandler) {
     /******************
     *    constants    *
@@ -683,18 +683,18 @@ function InteractiveMap(topology, categories, countyData,
     /***************
     *    init()    *
     ***************/
-    var topologyData = topology,
-        categoryData = categories,
-        countyData = countyData;
+    var topologyData = _topology,
+        categoryData = _categories,
+        countyData = _counties;
 
     var tooltipContainer = d3.select("#map-tooltip"),
-        tooltipCountyName = d3.select("#map-tooltip #county"),
-        tooltipDataName = d3.select("#map-tooltip #data #name"),
-        tooltipDataValue = d3.select("#map-tooltip #data #value");
+        tooltipCountyName = d3.select("#map-tooltip .county"),
+        tooltipDataName = d3.select("#map-tooltip .data .name"),
+        tooltipDataValue = d3.select("#map-tooltip .data .value");
     
     var colorScale;
 
-    var currentCategory,
+    var currentCategory = null,
         currentYear,
         currentCounty,
         currentCountyDomSelection,
@@ -726,18 +726,18 @@ function InteractiveMap(topology, categories, countyData,
         tryDrawMap();
         paintMap(category, year, start, end);
         tryUpdateTooltipText();
-    }
+    };
 
     this.resize = function () {
         adjustScaleAndPosition();
-    }
+    };
 
     
     /******************
     *    functions    *
     ******************/
     function paintMap(category, year, start, end) {        
-        if (currentCategory != category) {
+        if (currentCategory !== category) {
             var data = [];
             var values = categoryData[category].values;
             
@@ -755,7 +755,7 @@ function InteractiveMap(topology, categories, countyData,
                 .range([colorLowest, colorHighest])
                 .nice();
             
-            if (currentCategory != null) {
+            if (currentCategory !== null) {
                 legend.remove();
             }
             makeLegend();
@@ -876,8 +876,8 @@ function InteractiveMap(topology, categories, countyData,
 
     function setTooltipPosition(x, y) {
         tooltipContainer.style({
-            left: x + tooltipXYSpacing,
-            top: y + tooltipXYSpacing,
+            left: x + tooltipXYSpacing + "px",
+            top: y + tooltipXYSpacing + "px",
             display: "block"
         });
 
@@ -943,8 +943,8 @@ function InteractiveMap(topology, categories, countyData,
         mapClientRect = map.node().getBoundingClientRect();
 
         var actualX = mapClientRect.x;
-        var expectedX = mapContainerClientRect.width / 2
-             - mapClientRect.width / 2;
+        var expectedX = mapContainerClientRect.width / 2 - 
+                mapClientRect.width / 2;
         var diffX = expectedX - actualX;
 
         // map svg container starts from x = 0, so there is not much to 
@@ -953,8 +953,8 @@ function InteractiveMap(topology, categories, countyData,
         //  coordinate, we need to factor in the navbar height.
         var actualAbsoluteY = mapClientRect.y;
         var actualRelativeY = actualAbsoluteY - mapContainerClientRect.y;
-        var expectedRelativeY = mapContainerClientRect.height / 2
-             - mapClientRect.height / 2;
+        var expectedRelativeY = mapContainerClientRect.height / 2 - 
+                mapClientRect.height / 2;
         var diffY = expectedRelativeY - actualRelativeY;
 
         map.attr({
@@ -975,7 +975,7 @@ function InteractiveMap(topology, categories, countyData,
         var newRegionSelected = false;
         var domObjSelected = d3.select(this);
 
-        if (currentSelectedCounty == null) {
+        if (currentSelectedCounty === null) {
             domObjSelected.attr({
                 id: "selected"
             });
@@ -984,7 +984,7 @@ function InteractiveMap(topology, categories, countyData,
             currentCountyDomSelection = domObjSelected;
             newRegionSelected = true;
         }
-        else if (currentSelectedCounty != county) {
+        else if (currentSelectedCounty !== county) {
             currentCountyDomSelection.attr({
                 id: null
             });
@@ -1005,7 +1005,7 @@ function InteractiveMap(topology, categories, countyData,
     function mapContainerClickHandler() {
         var mouseCurrentlyOnRegion = tooltipVisible;
 
-        if (!mouseCurrentlyOnRegion && currentSelectedCounty != null) {
+        if (!mouseCurrentlyOnRegion && currentSelectedCounty !== null) {
             currentCountyDomSelection.attr({
                 id: null
             });
@@ -1158,11 +1158,11 @@ function Progress(start, end, externalYearChangeHandler) {
         if (animRunning)
             stopAnim();
         setCurrentYear(yearStart);
-    }
+    };
 
     this.resize = function () {
         windowResizeHandler();
-    }
+    };
 
     
     /******************
@@ -1175,9 +1175,8 @@ function Progress(start, end, externalYearChangeHandler) {
             .getBoundingClientRect();
         
         progressBarAreaXEnd = 
-            mapClientRect.x 
-                + mapClientRect.width 
-                - progressBarContainerClientRect.x;
+            mapClientRect.x + mapClientRect.width - 
+            progressBarContainerClientRect.x;
 
         //
         // resize axes, update scale
@@ -1305,7 +1304,7 @@ function Progress(start, end, externalYearChangeHandler) {
     }
 
     function tryUpdateCurrentYear(year) {
-        if (currentYear != year) {
+        if (currentYear !== year) {
             updateCurrentYear(year);
         }
     }
@@ -1321,10 +1320,10 @@ function Progress(start, end, externalYearChangeHandler) {
 
         setCurrentYearIndicatorText(year);
         updateProgressHandleLocation(year);
-        updateProgressLines(year);
+        updateProgressLines();
     }
 
-    function updateProgressLines(year) {
+    function updateProgressLines() {
         updateProgressBarLineElapsedDimensions();
         progressBarLineElapsed
             .attr({
@@ -1348,7 +1347,7 @@ function Progress(start, end, externalYearChangeHandler) {
     }
 
     function updateProgressBarLineRemainingDimensions() {        
-        progressBarLineRemainingXStart = currentX
+        progressBarLineRemainingXStart = currentX;
         progressBarLineRemainingXEnd = progressBarAreaXEnd;
 
         progressBarLineRemainingWidth = 
@@ -1404,7 +1403,7 @@ function Progress(start, end, externalYearChangeHandler) {
         showPauseButton();
 
         // don't start over if animation reached end by dragging
-        if (currentYear == yearEnd && !animInterruptedByDrag)
+        if (currentYear === yearEnd && !animInterruptedByDrag)
             updateCurrentYear(yearStart);
 
         animRunning = true;
@@ -1418,7 +1417,7 @@ function Progress(start, end, externalYearChangeHandler) {
             updateCurrentYear(currentYear);
         }
         else {
-            stopAnim()
+            stopAnim();
         }
     }
 
@@ -1453,4 +1452,4 @@ function Progress(start, end, externalYearChangeHandler) {
             style: null
         });
     }
-};
+}

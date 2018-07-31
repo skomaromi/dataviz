@@ -1,18 +1,20 @@
-<html>
+<!DOCTYPE html>
+<html lang="hr">
     <head>
-        <title>Data Visualization - Phase 1 - Layout</title>
+        <meta charset="utf-8">
+        <title>Data Visualization</title>
         <script src="http://d3js.org/d3.v3.min.js"></script>
         <script src="http://d3js.org/topojson.v1.min.js"></script>
         <script src="http://d3js.org/queue.v1.min.js"></script>
-        <link rel="stylesheet" type="text/css" href="res/css/style.css" />
+        <link rel="stylesheet" type="text/css" href="res/css/style.css">
         <script src="res/js/main.js"></script>
     </head>
     <body class="hidden">
         <div id="map-tooltip">
-            <p id="county"></p>
-            <p id="data">
-                <span id="name"></span>
-                <span id="value"></span>
+            <p class="county"></p>
+            <p class="data">
+                <span class="name"></span>
+                <span class="value"></span>
             </p>
         </div>
         <div class="rows">
@@ -47,10 +49,10 @@
                             </li>
                             <li id="3">
                                 <span class="icon">
-                                    <i class="fas fa-briefcase"></i>
+                                    <i class="fas fa-leaf"></i>
                                 </span>
                                 <span class="title">
-                                    Broj poduze&cacute;a
+                                    Okoli&scaron;
                                 </span>
                             </li>
                         </ul>
@@ -61,12 +63,12 @@
                     </div>
                 </div>
                 <aside>
-                    <div id="category">
-                        <h2 id="title"></h2>
+                    <div class="category">
+                        <p id="title"></p>
                         <p id="description"></p>
                     </div>
                     
-                    <div id="county">
+                    <div class="county">
                         <h2>Podaci o &zcaron;upaniji</h2>
                         <!-- visible only when no county is selected -->
                         <p id="not-selected">
@@ -76,7 +78,7 @@
 
                         <!-- visible when any county is selected -->
                         <div id="selected" class="hidden">
-                            <p id="name">
+                            <p class="name">
                                 Osje&ccaron;ko-baranjska &zcaron;upanija
                             </p>
                             <p class="attr">
