@@ -1,8 +1,8 @@
 {
-    "title": "Razvoj &scaron;irokopojasnog pristupa",
-    "description": "Prikazuje kretanje broja &scaron;irokopojasnih priklju&ccaron;aka u Hrvatskoj u razdoblju od 2007. do 2017. godine.",
-    "tooltipText": "Broj priklju&ccaron;aka",
-    "graphTitle": "&Scaron;irokopojasni priklju&ccaron;ci",
+    "title": "DUMMY1",
+    "description": "DUMMY1.desc",
+    "tooltipText": "DUMMY1.tooltip",
+    "graphTitle": "DUMMY1.graphtitle",
     "values": [
         [
             { "year": 2007, "value": 11968 },

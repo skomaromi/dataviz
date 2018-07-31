@@ -1,0 +1,172 @@
+{
+	"counties": [
+		{
+			"name": "Dubrova&ccaron;ko-neretvanska &zcaron;upanija",
+			"area": 1781,
+			"population": 122568,
+			"seat": "Dubrovnik",
+			"cities": 5,
+			"municipalities": 17
+		},
+		{
+			"name": "&Scaron;ibensko-kninska &zcaron;upanija",
+			"area": 2984,
+			"population": 109375,
+			"seat": "&Scaron;ibenik",
+			"cities": 5,
+			"municipalities": 15
+		},
+		{
+			"name": "Splitsko-dalmatinska &zcaron;upanija",
+			"area": 4540,
+			"population": 454798,
+			"seat": "Split",
+			"cities": 16,
+			"municipalities": 39
+		},
+		{
+			"name": "Zadarska &zcaron;upanija",
+			"area": 3646,
+			"population": 170017,
+			"seat": "Zadar",
+			"cities": 6,
+			"municipalities": 28
+		},
+		{
+			"name": "Krapinsko-zagorska &zcaron;upanija",
+			"area": 1229,
+			"population": 132892,
+			"seat": "Krapina",
+			"cities": 7,
+			"municipalities": 25
+		},
+		{
+			"name": "Karlova&ccaron;ka &zcaron;upanija",
+			"area": 3626,
+			"population": 128899,
+			"seat": "Karlovac",
+			"cities": 5,
+			"municipalities": 17
+		},
+		{
+			"name": "Li&ccaron;ko-senjska &zcaron;upanija",
+			"area": 5353,
+			"population": 50927,
+			"seat": "Gospi&cacute;",
+			"cities": 4,
+			"municipalities": 8
+		},
+		{
+			"name": "Primorsko-goranska &zcaron;upanija",
+			"area": 3588,
+			"population": 296195,
+			"seat": "Rijeka",
+			"cities": 14,
+			"municipalities": 22
+		},
+		{
+			"name": "Sisa&ccaron;ko-moslava&ccaron;ka &zcaron;upanija",
+			"area": 4468,
+			"population": 172439,
+			"seat": "Sisak",
+			"cities": 6,
+			"municipalities": 13
+		},
+		{
+			"name": "Zagreba&ccaron;ka &zcaron;upanija",
+			"area": 3060,
+			"population": 317606,
+			"seat": "Zagreb",
+			"cities": 9,
+			"municipalities": 25
+		},
+		{
+			"name": "Grad Zagreb",
+			"area": 641,
+			"population": 790017,
+			"seat": "Zagreb",
+			"cities": 1,
+			"municipalities": 0
+		},
+		{
+			"name": "Istarska &zcaron;upanija",
+			"area": 2813,
+			"population": 208055,
+			"seat": "Pazin",
+			"cities": 10,
+			"municipalities": 31
+		},
+		{
+			"name": "Brodsko-posavska &zcaron;upanija",
+			"area": 2030,
+			"population": 158575,
+			"seat": "Slavonski Brod",
+			"cities": 2,
+			"municipalities": 26
+		},
+		{
+			"name": "Osje&ccaron;ko-baranjska &zcaron;upanija",
+			"area": 4155,
+			"population": 305032,
+			"seat": "Osijek",
+			"cities": 7,
+			"municipalities": 35
+		},
+		{
+			"name": "Po&zcaron;e&scaron;ko-slavonska &zcaron;upanija",
+			"area": 1823,
+			"population": 78034,
+			"seat": "Po&zcaron;ega",
+			"cities": 5,
+			"municipalities": 5
+		},
+		{
+			"name": "Vukovarsko-srijemska &zcaron;upanija",
+			"area": 2454,
+			"population": 179521,
+			"seat": "Vukovar",
+			"cities": 5,
+			"municipalities": 26
+		},
+		{
+			"name": "Viroviti&ccaron;ko-podravska &zcaron;upanija",
+			"area": 2024,
+			"population": 84836,
+			"seat": "Virovitica",
+			"cities": 3,
+			"municipalities": 13
+		},
+		{
+			"name": "Bjelovarsko-bilogorska &zcaron;upanija",
+			"area": 2640,
+			"population": 119764,
+			"seat": "Bjelovar",
+			"cities": 5,
+			"municipalities": 18
+		},
+		{
+			"name": "Koprivni&ccaron;ko-kri&zcaron;eva&ccaron;ka &zcaron;upanija",
+			"area": 1748,
+			"population": 115584,
+			"seat": "Koprivnica",
+			"cities": 3,
+			"municipalities": 22
+		},
+		{
+			"name": "Me&dstrok;imurska &zcaron;upanija",
+			"area": 729,
+			"population": 113804,
+			"seat": "&Ccaron;akovec",
+			"cities": 3,
+			"municipalities": 22
+		},
+		{
+			"name": "Vara&zcaron;dinska &zcaron;upanija",
+			"area": 1262,
+			"population": 175951,
+			"seat": "Vara&zcaron;din",
+			"cities": 6,
+			"municipalities": 22
+		}
+	]
+}

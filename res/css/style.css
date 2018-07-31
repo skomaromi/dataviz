@@ -12,11 +12,16 @@ body {
     letter-spacing: -0.04em;
     height: 100vh;
     user-select: none;
+    overflow-y: hidden;
+}
+body.hidden {
+    opacity: 0;
 }
 body, 
 .cols, .rows,
 nav ul, nav ul li,
 #map, #legend .item,
+.graph-tooltip .data-container,
 footer, footer #controls, footer #controls ul, footer #controls ul li, 
 footer #controls ul li a, #progress-bar, #current-year {
     display: flex;
@@ -68,9 +73,8 @@ nav ul li .title {
     line-height: 1em;
 }
 nav ul li .title,
-aside h3,
-#legend,
-#tooltip {
+aside h3, aside p, .graph-tooltip,
+#legend, #map-tooltip {
     font-size: 1.2em;
 }
 nav ul li, 
@@ -106,8 +110,9 @@ aside {
     position: absolute;
     bottom: 32px;
     right: 32px;
-    box-shadow: 0px 3px 10px -1px #838383;
     padding: 10px;
+    box-shadow: 0px 3px 10px -1px #838383;
+    background-color: #fff;
 }
 #legend .item {
     align-items: end;
@@ -123,7 +128,7 @@ aside {
     height: 12px;
     margin-right: .3em;
 }
-#tooltip {
+#map-tooltip {
     display: none;
     position: absolute;
     background-color: #838383;
@@ -131,41 +136,92 @@ aside {
     color: #fff;
     z-index: 2;
 }
-#tooltip #county {
+#map-tooltip #county {
     font-weight: bold;
 }
 
 aside {
-    width: 270px;
-    flex-shrink: 0;
-    box-sizing: border-box;
-    padding: 20px 15px 0px 15px;
+    padding: 20px 20px 0 20px;
     overflow-y: auto;
+    min-width: -moz-min-content;
+    min-width: min-content;
+}
+aside div:last-child {
+    margin-bottom: 20px;
+}
+aside #category {
+    margin-bottom: 4em;
+}
+aside #county #not-selected {
+    font-style: italic;
+}
+aside #county #not-selected.hidden {
+    display: none;
+}
+aside #county #selected.hidden {
+    height: 0;
+    overflow-y: hidden;
+}
+aside #county #name {
+    font-weight: bold;
 }
 aside h2 {
     margin-bottom: .6em;
 }
-aside .attr {
-    margin-bottom: .4em;
-    margin-left: 1em;
-    font-size: 1.1em;
-}
-aside .attr-title {
-    font-weight: bold;
+aside p {
+    line-height: 1.4em;
 }
 aside .attr-value {
     user-select: all;
 }
-aside h3 {
-    margin-top: 4em;
-    margin-left: .5em;
+aside #graphs {
+    min-width: 200px;
 }
-aside .graph {
+aside #graphs h3 {
+    margin-top: 3.3em;
+}
+aside #graphs .graph {
     margin-top: 1em;
-    margin-left: 1em;
+    width: 200px;
+    height: 100px;
 }
-aside .graph:last-child {
-    margin-bottom: 2.5em;
+aside #graphs .graph .line {
+    stroke: #0078a1;
+    stroke-width: 3px;
+    fill: none;
+}
+aside #graphs .graph .cursor-line {
+    fill: #838383;
+}
+aside #graphs .graph .cursor-circle {
+    fill: #fff;
+    stroke: #838383;
+    stroke-width: 2px;
+}
+.graph-tooltip {
+    position: absolute;
+    align-items: center;
+    display: flex;
+    z-index: 2;
+}
+.graph-tooltip .data-container {
+    background-color: #838383;
+    padding: 5px;
+    color: #fff;
+    flex-direction: column;
+    text-align: right;
+}
+.graph-tooltip .year {
+    font-weight: bold;
+    font-size: 0.8em;
+}
+.graph-tooltip::after {
+    width: 0;
+    height: 0;
+    content: '';
+    border-top: 4px solid transparent;
+    border-bottom: 4px solid transparent;
+    border-left: 4px solid #838383;
 }
 
 footer {
@@ -174,6 +230,7 @@ footer {
     background-image: linear-gradient(170deg, #0078a1 10%, #9600a1);
     background-size: 100% 400%;
     flex: 0 0 45px;
+    z-index: 3;
 }
 footer, footer #controls ul li a {
     color: rgba(255, 255, 255, 0.9);
@@ -217,8 +274,7 @@ footer #controls ul li, #progress-bar #lines, #progress-bar #handle {
     fill: rgba(255, 255, 255, 0.9);
 }
 #progress-bar #handle {
-    stroke-width: 1.5px;
-    
+    stroke-width: 1.5px;   
 }
 #current-year {
     margin: 0 15px;

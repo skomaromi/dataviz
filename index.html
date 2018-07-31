@@ -7,8 +7,8 @@
         <link rel="stylesheet" type="text/css" href="res/css/style.css" />
         <script src="res/js/main.js"></script>
     </head>
-    <body>
-        <div id="tooltip">
+    <body class="hidden">
+        <div id="map-tooltip">
             <p id="county"></p>
             <p id="data">
                 <span id="name"></span>
@@ -34,7 +34,7 @@
                                     <i class="fas fa-industry"></i>
                                 </span>
                                 <span class="title">
-                                    Proizvodnja proizvoda
+                                    Industrija
                                 </span>
                             </li>
                             <li id="2">
@@ -61,68 +61,68 @@
                     </div>
                 </div>
                 <aside>
-                    <h2>Osje&ccaron;ko-baranjska &zcaron;upanija</h2>
-                    <p class="attr">
-                        <span class="attr-title">
-                            Povr&scaron;ina:
-                        </span>
-                        <span class="attr-value">
-                            19230 km<sup>2</sup></sup>
-                        </span>
-                    </p>
-                    <p class="attr">
-                        <span class="attr-title">
-                            Broj stanovnika:
-                        </span>
-                        <span class="attr-value">
-                            3789435
-                        </span>
-                    </p>
-                    <p class="attr">
-                        <span class="attr-title">
-                            Glavni grad:
-                        </span>
-                        <span class="attr-value">
-                            Osijek
-                        </span>
-                    </p>
-                    <p class="attr">
-                        <span class="attr-title">
-                            Broj op&cacute;ina:
-                        </span>
-                        <span class="attr-value">
-                            42
-                        </span>
-                    </p>
-                    <p class="attr">
-                        <span class="attr-title">
-                            Broj gradova:
-                        </span>
-                        <span class="attr-value">
-                            91528
-                        </span>
-                    </p>
+                    <div id="category">
+                        <h2 id="title"></h2>
+                        <p id="description"></p>
+                    </div>
+                    
+                    <div id="county">
+                        <h2>Podaci o &zcaron;upaniji</h2>
+                        <!-- visible only when no county is selected -->
+                        <p id="not-selected">
+                            Odaberite neku od &zcaron;upanija na karti za 
+                            prikaz vi&scaron;e podataka.
+                        </p>
 
-                    <h3>
-                        Broj &scaron;irokopojasnih priklju&ccaron;aka u 
-                        ovisnosti o vremenu
-                    </h3>
-                    <img class="graph" src="res/img/dummy-graph.png"/>
-
-                    <h3>
-                        Proizvedeni proizvodi u ovisnosti o vremenu
-                    </h3>
-                    <img class="graph" src="res/img/dummy-graph.png"/>
-
-                    <h3>
-                        Broj turista u ovisnosti o vremenu
-                    </h3>
-                    <img class="graph" src="res/img/dummy-graph.png"/>
-
-                    <h3>
-                        Broj poduze&cacute;a u ovisnosti o vremenu
-                    </h3>
-                    <img class="graph" src="res/img/dummy-graph.png"/>
+                        <!-- visible when any county is selected -->
+                        <div id="selected" class="hidden">
+                            <p id="name">
+                                Osje&ccaron;ko-baranjska &zcaron;upanija
+                            </p>
+                            <p class="attr">
+                                <span class="attr-title">
+                                    Povr&scaron;ina:
+                                </span>
+                                <span class="attr-value">
+                                    <span id="area">19230</span> km<sup>2</sup>
+                                </span>
+                            </p>
+                            <p class="attr">
+                                <span class="attr-title">
+                                    Broj stanovnika:
+                                </span>
+                                <span class="attr-value" id="population">
+                                    3789435
+                                </span>
+                            </p>
+                            <p class="attr">
+                                <span class="attr-title">
+                                    Glavni grad:
+                                </span>
+                                <span class="attr-value" id="seat">
+                                    Osijek
+                                </span>
+                            </p>
+                            <p class="attr">
+                                <span class="attr-title">
+                                    Broj gradova:
+                                </span>
+                                <span class="attr-value" id="cities">
+                                    91528
+                                </span>
+                            </p>
+                            <p class="attr">
+                                <span class="attr-title">
+                                    Broj op&cacute;ina:
+                                </span>
+                                <span class="attr-value" id="municipalities">
+                                    42
+                                </span>
+                            </p>
+                            
+                            <div id="graphs"></div>                      
+                        </div>
+                    </div>
                 </aside>
             </div>
             <footer>

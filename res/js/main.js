@@ -1,7 +1,11 @@
 window.onload = function() {
+    /***************
+    *    init()    *
+    ***************/
     var s, m, p, n, 
         yearStart, yearEnd;
-    var currentCategory = 0;
+    var currentCategory = 0,
+        currentCounty = null;
 
     var loadPaths = [
         // map TopoJSON
@@ -9,9 +13,12 @@ window.onload = function() {
 
         // datasets
         "res/data/dataset_broadband.json",
+        "res/data/dataset_industry.json",
+        "res/data/dataset_tourism.json",
+        "res/data/dataset_UNKNOWN.json",
 
-        // county names
-        "res/data/data_names.json"
+        // general county data
+        "res/data/data_county.json"
     ];
 
     loadAll();
@@ -29,11 +36,42 @@ window.onload = function() {
         m.show(currentCategory, year, yearStart, yearEnd);
     }
 
-    function categoryChangeHandler(idx) {
-        currentCategory = idx;
+    function categoryChangeHandler(category) {
+        currentCategory = category;
 
         p.resetProgress();
         m.show(currentCategory, yearStart, yearStart, yearEnd);
+        s.show(currentCategory, currentCounty);
+    }
+
+    function countyChangeHandler(county) {
+        currentCounty = county;
+
+        s.show(currentCategory, currentCounty);
+    }
+
+    function unhideUi() {
+        var body = d3.select("body");
+        body
+            // override CSS hide
+            .style({opacity: 0})
+
+            // remove CSS hide, inline styling remains (still hidden)
+            .attr({class: null})
+            
+            // blur
+            .style({filter: "blur(50px)"})
+
+            // unhide
+            .transition()
+            .duration(1000)
+            .style({
+                opacity: 1,
+                filter: "blur(0px)"
+            })
+
+            .transition()
+            .attr({style: null});
     }
 
     function loadAll() {
@@ -52,26 +90,27 @@ window.onload = function() {
             .feature(topology, topology.objects.layer1)
             .features;
         
-        // county data
-        var countyData = new Array();
+        // category data
+        var categoryData = [];
         
         // this will allow us to use
-        //  countyData[category].values[county][year]
+        //  categoryData[category].values[county][year]
         //  syntax.
         for (var i = 1; i < results.length - 1; i++) {
             var categoryRaw = results[i];
             var category = {
                 title: categoryRaw.title,
                 description: categoryRaw.description,
-                shortTitle: categoryRaw.shortTitle,
-                values: new Array()
+                tooltipText: categoryRaw.tooltipText,
+                graphTitle: categoryRaw.graphTitle,
+                values: []
             };
             
             var counties = categoryRaw.values;
 
             for (var j = 0; j < counties.length; j++) {
                 var years = counties[j];
-                var county = new Array();
+                var county = [];
                 
                 for (var k = 0; k < years.length; k++) {
                     var y = years[k];
@@ -81,7 +120,7 @@ window.onload = function() {
                 category.values.push(county);
             }
 
-            countyData.push(category);
+            categoryData.push(category);
         }
         
         // values array from zeroth category, zeroth county
@@ -91,11 +130,11 @@ window.onload = function() {
         yearEnd = yC0C0[yC0C0.length - 1].year;
 
         // county names
-        var countyNames = results[results.length - 1].names;
+        var countyData = results[results.length - 1].counties;
 
-        s = new SidebarData(countyData, countyNames);
-        m = new InteractiveMap(topologyData, countyData, countyNames,
-            s.displayDataForCounty);
+        s = new Sidebar(categoryData, countyData, yearStart, yearEnd);
+        m = new InteractiveMap(topologyData, categoryData, countyData,
+            countyChangeHandler);
 
         p = new Progress(yearStart, yearEnd, yearChangeHandler);
         n = new Navbar(categoryChangeHandler);
@@ -104,11 +143,16 @@ window.onload = function() {
         //  would result in resize events triggering methods of nonexistent 
         //  objects
         window.onresize = resizeHandler;
+
+        unhideUi();
     }
 }
 
 
 function Navbar(externalCategoryChangeHandler) {
+    /***************
+    *    init()    *
+    ***************/
     var tabs = d3.selectAll("nav li");
     tabs.on("click", tabClickHandler);
 
@@ -116,6 +160,10 @@ function Navbar(externalCategoryChangeHandler) {
 
     setActiveCategory(0);
 
+
+    /******************
+    *    functions    *
+    ******************/
     function setActiveCategory(idx) {
         activeCategory = idx;
 
@@ -146,19 +194,483 @@ function Navbar(externalCategoryChangeHandler) {
 }
 
 
-function SidebarData(countyData, countyNames) {
-    this.displayDataForCounty = function (county) {
-        if (county == null) {
-            console.log("not displaying data.");
+function Sidebar(categories, counties, start, end) {
+    /***************
+    *    init()    *
+    ***************/
+    var categoryData = categories,
+        countyData = counties,
+        yearStart = start,
+        yearEnd = end;
+    
+    var currentCategory,
+        currentCounty;
+    
+    var categoryTitle = d3.select("#category #title"),
+        categoryDescription = d3.select("#category #description"),
+        countyDataArea = d3.select("#county #selected"),
+
+        countyName = d3.select("#county #name"),
+        countyArea = d3.select("#county #area"),
+        countyPopulation = d3.select("#county #population"),
+        countySeat = d3.select("#county #seat"),
+        countyCities = d3.select("#county #cities"),
+        countyMunicipalities = d3.select("#county #municipalities"),
+
+        countyGraphsContainer = d3.select("#county #graphs"),
+        countyNotSelectedMessage = d3.select("#county #not-selected");
+    
+    var graphs,
+        graphObjs = [];
+    
+    d3.select("aside").on("scroll", scrollEventDispatcher);
+
+    
+    /****************
+    *    methods    *
+    ****************/
+    this.show = function (category, county) {
+        if (currentCategory != category) {
+            currentCategory = category;
+
+            updateCategoryInfo();
         }
-        else {
-            console.log("displaying data for county " + county);
+
+        updateCountySection(county);
+    }
+
+
+    /******************
+    *    functions    *
+    ******************/
+    function updateCountySection(county) {
+        if (currentCounty == null && county != null) {
+            hideNotSelectedMessage();
+            currentCounty = county;
+            
+            populateCountySection();
+            showCountyData();
         }
+        else if (currentCounty != null && county == null) {
+            hideCountyData();
+            showNotSelectedMessage();
+
+            currentCounty = county;
+        }
+        else if (currentCounty != county) {
+            currentCounty = county;
+            populateCountySection();
+        }
+    }
+
+    function populateCountySection() {
+        var county = countyData[currentCounty];
+        countyName.html(county.name);
+        countyArea.html(county.area);
+        countyPopulation.html(county.population);
+        countySeat.html(county.seat);
+        countyCities.html(county.cities);
+        countyMunicipalities.html(county.municipalities);
+
+        if (graphs != null) {
+            graphs.remove();
+            d3.selectAll(".graph-tooltip").remove();
+            graphObjs = [];
+        }
+
+        graphs = countyGraphsContainer
+            .selectAll("div")
+            .data(categoryData)
+            .enter()
+            .append("div");
+        
+        graphs.append("h3").html(function (d) { return d.graphTitle; });
+
+        var graphContainers = graphs
+            .append("svg")
+            .attr({
+                class: "graph"
+            });
+    
+        
+        graphContainers.each(makeGraph);
+    }
+
+    function makeGraph(categoryData, categoryIdx) {
+        var graphSvgContainer = d3.select(this);
+
+        var tooltip = d3.select("body")
+            .append("div")
+            .attr({
+                class: "graph-tooltip",
+                id: categoryIdx
+            });
+
+        var graph = new SidebarGraph(
+            categoryData, categoryIdx, currentCounty, graphSvgContainer, 
+            tooltip, yearStart, yearEnd, graphHoverEventDispatcher
+        );
+
+        graphObjs.push(graph);
+    }
+
+    function graphHoverEventDispatcher(id, year) {
+        for (var i = 0; i < graphObjs.length; i++) {
+            if (i != id)
+                graphObjs[i].signalReceiver(year);
+        }
+    }
+
+    function scrollEventDispatcher() {
+        for (var i = 0; i < graphObjs.length; i++) {
+            graphObjs[i].scrollHandler();
+        }
+    }
+
+    function updateCategoryInfo() {
+        var category = categoryData[currentCategory];
+        categoryTitle.html(category.title);
+        categoryDescription.html(category.description);
+    }
+
+    function showCountyData() {
+        showElement(countyDataArea);
+    }
+
+    function hideCountyData() {
+        hideElement(countyDataArea);
+    }
+
+    function showNotSelectedMessage() {
+        showElement(countyNotSelectedMessage);
+    }
+
+    function hideNotSelectedMessage() {
+        hideElement(countyNotSelectedMessage);
+    }
+
+    function showElement(el) {
+        el.attr({class: null});
+    }
+
+    function hideElement(el) {
+        el.attr({class: "hidden"});
+    }
+}
+
+function SidebarGraph(data, category, county, svg, tooltip, start, end,
+    externalGraphHoverHandler) {
+    /******************
+    *    constants    *
+    ******************/
+    var cursorLineWidth = 2,
+        cursorCircleRadius = 4,
+        tooltipXSpacing = 8,
+        padding = 10;
+    
+    
+    /***************
+    *    init()    *
+    ***************/
+    var data = data,
+        category = category,
+        county = county,
+        svg = svg,
+        tooltip = tooltip,
+        yearStart = start,
+        yearEnd = end;
+    
+    var tooltipYear,
+        tooltipValue;
+    
+    var svgWidth, svgHeight, xScale, yScale, line, cursorLine, cursorCircle, 
+        currentYear, currentX, currentY;
+    
+    var tooltipVisible = false;
+
+    draw();
+
+
+    /****************
+    *    methods    *
+    ****************/
+    this.signalReceiver = function (year) {
+        if (currentYear == null && year != null) {
+            tryUpdateGraphIndicators(year);
+            showGraphIndicators();
+        }
+        else if (currentYear != null && year == null) {
+            hideGraphIndicators();
+        }
+        else if (currentYear != year) {
+            tryUpdateGraphIndicators(year);
+        }
+    }
+
+    this.scrollHandler = function () {
+        if (tooltipVisible)
+            setTooltipPosition();
+    }
+
+
+    /******************
+    *    functions    *
+    ******************/
+    function draw() {
+        makeGraph();
+
+        svg
+            .on("mouseenter", graphMouseEnter)
+            .on("mousemove", graphMouseMove)
+            .on("mouseleave", graphMouseLeave);
+    }
+
+    function makeTooltip() {
+        var tooltipContainer = tooltip.append("div")
+            .attr({ 
+                class: "data-container" 
+            });
+        tooltipYear = tooltipContainer.append("span")
+            .attr({
+                class: "year"
+            });
+        
+        tooltipValue = tooltipContainer.append("span")
+            .attr({
+                class: "value"
+            });
+        
+        hideTooltip();
+    }
+
+    function makeGraph() {
+        var svgClientRect = svg.node().getBoundingClientRect();
+
+        svgWidth = svgClientRect.width;
+        svgHeight = svgClientRect.height;
+
+        var xStart = padding,
+            xEnd = svgWidth - padding,
+            yStart = svgHeight - padding,
+            yEnd = padding;
+        
+        var values = data.values[county];
+        var valuesUnsparsed = [];
+
+        for (var i = 0; i < values.length; i++) {
+            if (values[i] !== undefined)
+                valuesUnsparsed.push(values[i]);
+        }
+
+        xScale = d3.scale.linear()
+            .domain([yearStart, yearEnd])
+            .range([xStart, xEnd]);
+        
+        yScale = d3.scale.linear()
+            .domain([
+                0,
+                d3.max(values)
+            ])
+            .range([yStart, yEnd])
+            .nice();
+
+        line = d3.svg.line()
+            .x(function (d, i) { return xScale(yearStart + i); })
+            .y(function (d, i) { return yScale(d); });
+        
+        svg.append("path")
+            .datum(valuesUnsparsed)
+            .attr({
+                class: "line",
+                d: line
+            });
+        
+        makeCursorLine();
+        makeCursorCircle();
+        makeTooltip();
+    }
+
+    function graphMouseEnter() {
+        var event = d3.mouse(this);
+        var mouseX = event[0];
+
+        handleMouseEvent(mouseX);
+        showGraphIndicators();
+    }
+
+    function graphMouseMove() {
+        var event = d3.mouse(this);
+        var mouseX = event[0];
+
+        handleMouseEvent(mouseX);
+    }
+
+    function graphMouseLeave() {
+        hideGraphIndicators();
+
+        externalGraphHoverHandler(category, null);
+    }
+
+    function showGraphIndicators() {
+        showCursorLine();
+        showCursorCircle();
+        showTooltip();
+    }
+
+    function hideGraphIndicators() {
+        hideCursorLine();
+        hideCursorCircle();
+        hideTooltip();
+
+        currentYear = null;
+    }
+
+    function handleMouseEvent(x) {
+        var decodedYearFloat = xScale.invert(x);
+        var decodedYear = Math.round(decodedYearFloat);
+
+        if (decodedYear > yearEnd)
+            decodedYear = yearEnd;
+        else if (decodedYear < yearStart)
+            decodedYear = yearStart;
+
+        tryUpdateGraphIndicators(decodedYear);
+    }
+
+    function tryUpdateGraphIndicators(year) {
+        if (currentYear != year) {
+            updateGraphIndicators(year);
+        }
+    }
+
+    function updateGraphIndicators(year) {
+        currentYear = year;
+        currentX = xScale(year);
+        currentY = yScale(data.values[county][year]);
+
+        // cursor
+        setCursorPosition();
+
+        // tooltip
+        updateTooltipText();
+        setTooltipPosition();
+
+        externalGraphHoverHandler(category, currentYear);
+    }
+
+    function setCursorPosition() {
+        cursorLine.attr({
+            x: cursorLineX()
+        });
+
+        cursorCircle.attr({
+            cx: currentX,
+            cy: currentY
+        });
+    }
+
+    function makeCursorLine() {
+        cursorLine = svg.append("rect")
+            .attr({
+                class: "cursor-line",
+                width: cursorLineWidth,
+                height: svgHeight
+            });
+        hideCursorLine();
+    }
+
+    function cursorLineX() {
+        return currentX - cursorLineWidth / 2;
+    }
+
+    function makeCursorCircle() {
+        cursorCircle = svg.append("circle")
+            .attr({
+                class: "cursor-circle",
+                r: cursorCircleRadius
+            });
+
+        hideCursorCircle();
+    }
+
+    function updateTooltipText() {
+        tooltipYear.text(currentYear);
+        tooltipValue.text(data.values[county][currentYear]);
+    }
+
+    function setTooltipPosition() {
+        var cursorCircleClientRect = cursorCircle.node()
+            .getBoundingClientRect();
+        
+        
+        if (!tooltipVisible)
+            peekAtTooltipStart();
+
+        var tooltipClientRect = tooltip.node().getBoundingClientRect();
+
+        if (!tooltipVisible)
+            peekAtTooltipEnd();
+
+        var tooltipPositionLeft = cursorCircleClientRect.left - 
+                tooltipClientRect.width - tooltipXSpacing,
+            tooltipPositionTop = cursorCircleClientRect.top + 
+                cursorCircleClientRect.height / 2 - 
+                tooltipClientRect.height / 2;
+
+        tooltip.style({
+            left: tooltipPositionLeft,
+            top: tooltipPositionTop
+        });
+    }
+
+    function showCursorLine() {
+        cursorLine.attr({style: null});
+    }
+
+    function hideCursorLine() {
+        cursorLine.style({visibility: "hidden"});
+    }
+
+    function showCursorCircle() {
+        cursorCircle.attr({style: null});
+    }
+
+    function hideCursorCircle() {
+        cursorCircle.style({visibility: "hidden"});
+    }
+
+    function showTooltip() {
+        tooltip.style({
+            display: null
+        });
+        tooltipVisible = true;
+    }
+
+    function hideTooltip() {
+        tooltip.style({
+            display: "none"
+        });
+        tooltipVisible = false;
+    }
+
+    function peekAtTooltipStart() {
+        tooltip.style({
+            visibility: "hidden",
+            display: null
+        });
+    }
+
+    function peekAtTooltipEnd() {
+        tooltip.style({
+            visibility: null,
+            display: "none"
+        });
     }
 }
 
 
-function InteractiveMap(topology, counties, names, externalRegionClickHandler) {
+function InteractiveMap(topology, categories, countyData, 
+    externalRegionClickHandler) {
     /******************
     *    constants    *
     ******************/
@@ -166,16 +678,19 @@ function InteractiveMap(topology, counties, names, externalRegionClickHandler) {
         colorHighest = "#0078a1",
         tooltipXYSpacing = 8,
         legendItemCount = 5;
-
     
+    
+    /***************
+    *    init()    *
+    ***************/
     var topologyData = topology,
-        countyData = counties,
-        countyNames = names;
+        categoryData = categories,
+        countyData = countyData;
 
-    var tooltipContainer = d3.select("#tooltip"),
-        tooltipCountyName = d3.select("#tooltip #county"),
-        tooltipDataName = d3.select("#tooltip #data #name"),
-        tooltipDataValue = d3.select("#tooltip #data #value");
+    var tooltipContainer = d3.select("#map-tooltip"),
+        tooltipCountyName = d3.select("#map-tooltip #county"),
+        tooltipDataName = d3.select("#map-tooltip #data #name"),
+        tooltipDataValue = d3.select("#map-tooltip #data #value");
     
     var colorScale;
 
@@ -223,8 +738,8 @@ function InteractiveMap(topology, counties, names, externalRegionClickHandler) {
     ******************/
     function paintMap(category, year, start, end) {        
         if (currentCategory != category) {
-            var data = new Array();
-            var values = countyData[category].values;
+            var data = [];
+            var values = categoryData[category].values;
             
             for (var i = 0; i < values.length; i++) {
                 for (var j = start; j <= end; j++) {
@@ -250,7 +765,7 @@ function InteractiveMap(topology, counties, names, externalRegionClickHandler) {
 
         counties.attr({
             fill: function(d, county) { 
-                return colorScale(countyData[category].values[county][year]);
+                return colorScale(categoryData[category].values[county][year]);
             }
         });
 
@@ -259,11 +774,10 @@ function InteractiveMap(topology, counties, names, externalRegionClickHandler) {
 
     function makeLegend() {
         var domain = colorScale.domain();
-        var min = domain[0],
-            max = domain[1];
+        var max = domain[1];
         
         var range = d3.range(1, legendItemCount + 1);
-        var values = new Array();
+        var values = [];
         
         for (var i = 0; i < legendItemCount; i++) {
             var value = range[i] / legendItemCount * max;
@@ -274,7 +788,7 @@ function InteractiveMap(topology, counties, names, externalRegionClickHandler) {
             });
         }
 
-        var legend = legendContainer
+        legend = legendContainer
             .selectAll(".item")
             .data(values)
             .enter()
@@ -379,10 +893,10 @@ function InteractiveMap(topology, counties, names, externalRegionClickHandler) {
     }
 
     function updateTooltipText() {
-        var countyName = countyNames[currentCounty],
-            dataName = countyData[currentCategory].shortTitle,
-            dataValue = 
-                countyData[currentCategory].values[currentCounty][currentYear];
+        var countyName = countyData[currentCounty].name,
+            dataName = categoryData[currentCategory].tooltipText,
+            dataValue = categoryData[currentCategory]
+                .values[currentCounty][currentYear];
 
         tooltipCountyName.html(countyName);
         tooltipDataName.html(dataName + ":");
@@ -526,7 +1040,7 @@ function Progress(start, end, externalYearChangeHandler) {
 
 
     /***************
-    *    main()    *
+    *    init()    *
     ***************/
     var yearStart = start,
         yearEnd = end;
