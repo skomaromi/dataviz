@@ -3,7 +3,8 @@ window.onload = function() {
     *    init()    *
     ***************/
     var s, m, p, n, 
-        yearStart, yearEnd;
+        yearStart, yearEnd, categoryData,
+        uiTitle = d3.select("title");
     var currentCategory = 0,
         currentCounty = null;
 
@@ -39,6 +40,8 @@ window.onload = function() {
     function categoryChangeHandler(category) {
         currentCategory = category;
 
+        setUiTitle(categoryData[category].title);
+
         p.resetProgress();
         m.show(currentCategory, yearStart, yearStart, yearEnd);
         s.show(currentCategory, currentCounty);
@@ -48,6 +51,11 @@ window.onload = function() {
         currentCounty = county;
 
         s.show(currentCategory, currentCounty);
+    }
+
+    function setUiTitle(text) {
+        var title = "Vizualizacija podataka | " + text;
+        uiTitle.html(title);
     }
 
     function unhideUi() {
@@ -91,7 +99,7 @@ window.onload = function() {
             .features;
         
         // category data
-        var categoryData = [];
+        categoryData = [];
         
         // this will allow us to use
         //  categoryData[category].values[county][year]
